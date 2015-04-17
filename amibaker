@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+
+import yaml
+import argparse
+import sys
+
+VERSION = '0.1'
+
+
+def bake(recipe):
+    print yaml.load(recipe)
+
+if __name__ == "__main__":
+    argparser = argparse.ArgumentParser()
+
+    argparser.add_argument('recipe',
+                           nargs='+',
+                           type=argparse.FileType('r'),
+                           help='Recipe to bake image from.')
+
+    argparser.add_argument('-v', '--version',
+                           action='version',
+                           version='%(prog)s ' + VERSION,
+                           help='Shows version number.')
+
+    args = argparser.parse_args()
+
+    for r in args.recipe:
+        bake(r)
