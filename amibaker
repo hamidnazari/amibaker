@@ -4,21 +4,48 @@ import yaml
 import argparse
 from jinja2 import Template
 import time
+from awsclpy import AWSCLPy
 
 VERSION = '0.1'
 
 
-class AMIBaker:
+class AmiBaker:
     def __init__(self, recipe):
         self.recipe = yaml.load(recipe)
-        self.__render_tags(self.recipe['ami_tags'])
-        self.__render_tags(self.recipe['ec2_tags'])
+        self.__render_tags()
 
-    def __render_tags(self, tags):
-        for tag in tags:
-            for key, value in tag.iteritems():
+        self.__bake()
+
+    def __render_tags(self):
+        def render(tags):
+            for key, value in tags.iteritems():
                 template = TagTemplate(value)
-                tag[key] = template.render()
+                tags[key] = template.render()
+
+        render(self.recipe['ec2_tags'])
+        render(self.recipe['ami_tags'])
+
+    def __bake(self):
+        ec2 = AmiEc2(**self.recipe)
+        ec2.instantiate()
+        Provisioner(ec2, self.recipe['provisioning_script'])
+        ec2.terminate()
+
+
+class AmiEc2:
+    def __init__(self, **kwargs):
+        self.awscli = AWSCLPy(**kwargs['awscli_args'])
+
+    def instantiate(self):
+        pass
+
+    def terminate(self):
+        pass
+
+
+class Provisioner:
+    def __init__(self, ec2, script):
+        pass
 
 
 class TagTemplate(Template):
@@ -52,4 +79,4 @@ if __name__ == "__main__":
     args = argparser.parse_args()
 
     for recipe in args.recipe:
-        AMIBaker(recipe)
+        AmiBaker(recipe)
