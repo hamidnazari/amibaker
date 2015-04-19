@@ -113,9 +113,12 @@ class AmiEc2:
                                            '--description', 'Allow temporary SSH access to the box.',
                                            '--vpc-id', vpc_id)
 
-        # TODO: allow 22 ingress
         self.__awscli.ec2('authorize-security-group-ingress',
-                          '--group-id', security_group['GroupId'])
+                          '--group-id', security_group['GroupId'],
+                          '--protocol', 'tcp',
+                          '--port', 22,
+                          '--cidr', '0.0.0.0/0')
+
 
         self.__recipe['security_groups'] = [security_group['GroupId']]
 
@@ -136,14 +139,9 @@ class Provisioner:
     def __init__(self, ec2):
         self.__ec2 = ec2
 
-    def __sanitise_script(self, script):
-        return '\n'.join([line.strip() for line in script.split('\n')])
-
     def provision(self, script):
         # TODO: ssh and run provisioning script
-        script = self.__sanitise_script(script)
-        print 'ssh into ' + self.__ec2.get_hostname()
-        print script
+        script = '\n'.join([line.strip() for line in script.split('\n')])
 
 
 if __name__ == "__main__":
