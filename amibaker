@@ -10,54 +10,125 @@ VERSION = '0.1'
 
 
 class AmiBaker:
-    def __init__(self, recipe):
-        self.recipe = yaml.load(recipe)
+    def __init__(self, recipe, **kwargs):
+        self.__recipe = yaml.load(recipe)
         self.__render_tags()
-
-        self.__bake()
+        self.__debug = kwargs.get('debug', False)
 
     def __render_tags(self):
-        def render(tags):
+        def render(tags, **kwargs):
             for key, value in tags.iteritems():
-                template = TagTemplate(value)
-                tags[key] = template.render()
+                template = Template(value)
+                tags[key] = template.render(**kwargs)
 
-        render(self.recipe['ec2_tags'])
-        render(self.recipe['ami_tags'])
+        if self.__recipe['ami_tags']['Name']:
+            self.__recipe['ami_tags']['Name'] = 'amibaker: {{ timestamp }}'
 
-    def __bake(self):
-        ec2 = AmiEc2(**self.recipe)
+        if self.__recipe['ec2_tags']['Name']:
+            self.__recipe['ec2_tags']['Name'] = self.__recipe['ami_tags']['Name']
+
+        timestamp = int(time.time())
+
+        render(self.__recipe['ec2_tags'], timestamp=timestamp)
+        render(self.__recipe['ami_tags'], timestamp=timestamp)
+
+    def bake(self):
+        ec2 = AmiEc2(debug=self.__debug, recipe=self.__recipe)
         ec2.instantiate()
-        Provisioner(ec2, self.recipe['provisioning_script'])
-        ec2.terminate()
+
+        provisioner = Provisioner(ec2)
+        provisioner.provision(self.__recipe['provisioning_script'])
+
+        # TODO: take snapshot
+
+        # TODO: terminate after provision is done and not in debug mode
+        # if not self.__debug:
+        #     ec2.terminate()
 
 
 class AmiEc2:
-    def __init__(self, **kwargs):
-        self.awscli = AWSCLPy(**kwargs['awscli_args'])
+    def __init__(self, **kwrags):
+        self.__debug = kwrags.get('debug', False)
+        self.__awscli = AWSCLPy(quiet=not self.__debug, **kwrags['recipe']['awscli_args'])
+        self.__recipe = kwrags['recipe']
 
     def instantiate(self):
-        pass
+        if not self.__recipe.get('security_groups'):
+            self.__create_security_group()
+
+        if not self.__recipe.get('key_name'):
+            self.__generate_key_pair()
+
+        instance = self.__awscli.ec2('run-instances',
+                                            '--image-id', self.__recipe['base_ami'],
+                                            '--key-name', self.__recipe['key_name'],
+                                            '--security-group-ids', self.__recipe['security_groups'],
+                                            '--instance-type', self.__recipe['instance_type'],
+                                            '--subnet-id', self.__recipe['subnet_id'])
+
+        # TODO: tag instances
+
+        self.__instance = instance['Instances'][0]
 
     def terminate(self):
+        self.__delete_security_group()
+
+        if not self.__recipe['key_name']:
+            self.__delete_key_pair()
+
+    def get_hostname(self):
+        if self.__instance.get('PublicDnsName'):
+            return self.__instance['PublicDnsName']
+        else:
+            if self.__instance.get('PublicIpAddress'):
+                return self.__instance['PublicIpAddress']
+            elif self.__instance.get('PrivateIpAddress'):
+                return self.__instance['PrivateIpAddress']
+
+    def __get_vpc_id(self):
+        subnet = self.__awscli.ec2('describe-subnets',
+                                   '--subnet-ids', self.__recipe['subnet_id'])
+
+        return subnet['Subnets'][0]['VpcId']
+
+    def __create_security_group(self):
+        vpc_id = self.__get_vpc_id()
+
+        security_group = self.__awscli.ec2('create-security-group',
+                                           '--group-name', self.__recipe['ami_tags']['Name'],
+                                           '--description', 'Allow temporary SSH access to the box.',
+                                           '--vpc-id', vpc_id)
+
+        # TODO: allow 22 ingress
+        self.__awscli.ec2('authorize-security-group-ingress',
+                          '--group-id', security_group['GroupId'])
+
+        self.__recipe['security_groups'] = [security_group['GroupId']]
+
+    def __delete_security_group(self):
+        pass
+
+    def __generate_key_pair(self):
+        # TODO: generate keypair if not provided
+        self.__recipe['key_name'] = None
+
+    def __delete_key_pair(self):
+        # TODO: delete key pair if autogeneraged
         pass
 
 
 class Provisioner:
-    def __init__(self, ec2, script):
-        pass
+    def __init__(self, ec2):
+        self.__host = ec2.get_hostname()
 
+    def __sanitise_script(self, script):
+        return '\n'.join([line.strip() for line in script.split('\n')])
 
-class TagTemplate(Template):
-    def __append(self, kwargs, key, value):
-        if key not in kwargs:
-            kwargs[key] = int(value)
-
-    def render(self, *args, **kwargs):
-        self.__append(kwargs, 'timestamp', int(time.time()))
-
-        return super(TagTemplate, self).render(args, **kwargs)
-
+    def provision(self, script):
+        # TODO: ssh and run provisioning script
+        script = self.__sanitise_script(script)
+        print 'ssh into ' + self.__host
+        print script
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
@@ -69,7 +140,7 @@ if __name__ == "__main__":
 
     argparser.add_argument('-d', '--debug',
                            action='store_true',
-                           help='Enabled debug mode. Will not terminate instance on failure.')
+                           help='Enables debug mode. Will not terminate instance on failure.')
 
     argparser.add_argument('-v', '--version',
                            action='version',
@@ -79,4 +150,6 @@ if __name__ == "__main__":
     args = argparser.parse_args()
 
     for recipe in args.recipe:
-        AmiBaker(recipe)
+        baker = AmiBaker(recipe,
+                         debug=args.debug)
+        baker.bake()
