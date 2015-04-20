@@ -13,7 +13,8 @@ class AmiBaker:
     def __init__(self, recipe, **kwargs):
         self.__recipe = yaml.load(recipe)
         self.__render_tags()
-        self.__debug = kwargs.get('debug', False)
+        self.__verbose = kwargs.get('verbose', False)
+        self.__keep_instance = kwargs.get('keep_instance', False)
 
     def __render_tags(self):
         def render(tags, **kwargs):
@@ -33,22 +34,23 @@ class AmiBaker:
         render(self.__recipe['ami_tags'], timestamp=timestamp)
 
     def bake(self):
-        ec2 = AmiEc2(debug=self.__debug, recipe=self.__recipe)
+        ec2 = AmiEc2(verbose=self.__verbose, recipe=self.__recipe)
         ec2.instantiate()
 
         provisioner = Provisioner(ec2)
         provisioner.provision(self.__recipe['provisioning_script'])
 
-        ec2.create_image()
+        # TODO: make sure image creation works
+        self.__image_id = ec2.create_image()
 
-        if not self.__debug:
+        if self.__keep_instance:
             ec2.terminate()
 
 
 class AmiEc2:
     def __init__(self, **kwrags):
-        self.__debug = kwrags.get('debug', False)
-        self.__awscli = AWSCLPy(quiet=not self.__debug, **kwrags['recipe']['awscli_args'])
+        self.__verbose = kwrags.get('verbose', False)
+        self.__awscli = AWSCLPy(quiet=not self.__verbose, **kwrags['recipe']['awscli_args'])
         self.__recipe = kwrags['recipe']
 
     def instantiate(self):
@@ -96,8 +98,13 @@ class AmiEc2:
                           '--tags', tags)
 
     def create_image(self):
-        # TODO: take snapshot
-        pass
+        image_id = self.__awscli.ec2('create-image',
+                                     '--instance-id', self.__instance['InstanceId'],
+                                     '--name', self.__recipe['ami_tags']['Name'])
+
+        self.tag(image_id, self.__recipe['ami_tags'])
+
+        return image_id
 
     def __get_vpc_id(self):
         subnet = self.__awscli.ec2('describe-subnets',
@@ -110,7 +117,7 @@ class AmiEc2:
 
         security_group = self.__awscli.ec2('create-security-group',
                                            '--group-name', self.__recipe['ami_tags']['Name'],
-                                           '--description', 'Allow temporary SSH access to the box.',
+                                           '--description', 'Allows temporary SSH access to the box.',
                                            '--vpc-id', vpc_id)
 
         self.__awscli.ec2('authorize-security-group-ingress',
@@ -118,7 +125,6 @@ class AmiEc2:
                           '--protocol', 'tcp',
                           '--port', 22,
                           '--cidr', '0.0.0.0/0')
-
 
         self.__recipe['security_groups'] = [security_group['GroupId']]
 
@@ -152,11 +158,15 @@ if __name__ == "__main__":
                            type=argparse.FileType('r'),
                            help='Recipe to bake image from.')
 
-    argparser.add_argument('-d', '--debug',
+    argparser.add_argument('-v', '--verbose',
                            action='store_true',
-                           help='Enables debug mode. Will not terminate instance on failure.')
+                           help='Prints commands being run in the background.')
 
-    argparser.add_argument('-v', '--version',
+    argparser.add_argument('-k', '--keep-instance',
+                           action='store_true',
+                           help="Keeps EC2 instance after provisioning is done.")
+
+    argparser.add_argument('-V', '--version',
                            action='version',
                            version='%(prog)s ' + VERSION,
                            help='Shows version number.')
@@ -165,5 +175,6 @@ if __name__ == "__main__":
 
     for recipe in args.recipe:
         baker = AmiBaker(recipe,
-                         debug=args.debug)
+                         verbose=args.verbose,
+                         keep_instance=args.keep_instance)
         baker.bake()
