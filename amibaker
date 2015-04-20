@@ -2,9 +2,10 @@
 
 import yaml
 import argparse
-from jinja2 import Template
 import time
+from jinja2 import Template
 from awsclpy import AWSCLPy
+from fabric.api import run, env
 
 VERSION = '0.1'
 
@@ -85,6 +86,10 @@ class AmiEc2:
         if hasattr(self, '__key_name'):
             self.__delete_key_pair()
 
+    def wait_until_running(self):
+        self.__awscli.ec2('wait', 'instance-running',
+                          '--instance-ids', self.__instance['InstanceId'])
+
     def get_hostname(self):
         if self.__instance.get('PublicDnsName'):
             return self.__instance['PublicDnsName']
@@ -93,6 +98,9 @@ class AmiEc2:
                 return self.__instance['PublicIpAddress']
             elif self.__instance.get('PrivateIpAddress'):
                 return self.__instance['PrivateIpAddress']
+
+    def get_username(self):
+        return self.__recipe.get('ssh_username')
 
     def tag(self, resource, tags):
         tags = ["Key=%s,Value=%s" % (key, value) for key, value in tags.iteritems()]
@@ -153,9 +161,20 @@ class Provisioner:
         self.__ec2 = ec2
 
     def provision(self, script):
-        # TODO: ssh and run provisioning script
         script = '\n'.join([line.strip() for line in script.split('\n')])
 
+        self.__ec2.wait_until_running()
+
+        env.host_string = self.__ec2.get_hostname() # host to connect to
+        env.user = self.__ec2.get_username() # ssh user to be used for this session
+        env.use_ssh_config = True # use ~/.ssh/config if avaialble
+        env.eagerly_disconnect = True # disconnect right after work is done
+        env.skip_bad_hosts = True # no need to check fingerprint
+        env.password = None # no passwords available, use private key
+        env.connection_attempts = 5 # number of ssh attemps
+        env.timeout = 15 # how many seconds until considered failed attempt
+
+        run('hostname')
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
