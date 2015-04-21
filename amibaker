@@ -5,7 +5,7 @@ import argparse
 import time
 from jinja2 import Template
 from awsclpy import AWSCLPy
-from fabric.api import run, env, settings, hide
+from fabric.api import run, env, settings, hide, show
 
 VERSION = '0.1'
 
@@ -173,26 +173,24 @@ class Provisioner:
         self.__verbose = kwargs.get('verbose', False)
 
     def provision(self, script):
-        # script = '\n'.join([line.strip() for line in script.split('\n')])
-
         self.__ec2.wait_until_running()
 
         env.host_string = self.__ec2.get_hostname() # host to connect to
         env.user = self.__ec2.get_username() # ssh user to be used for this session
+        env.password = None # no passwords available, use private key
         env.use_ssh_config = True # use ~/.ssh/config if avaialble
         env.eagerly_disconnect = True # disconnect right after work is done
         env.skip_bad_hosts = True # no need to check fingerprint
-        env.password = None # no passwords available, use private key
-        env.connection_attempts = 5 # number of ssh attemps
+        env.connection_attempts = 6 # number of ssh attemps
         env.timeout = 15 # how many seconds until considered failed attempt
+        env.colorize_errors = True
 
-        fabric_output = ['warnings', 'running', 'stdout', 'stderr']
+        settings(hide('warnings', 'running', 'stdout', 'stderr'))
 
         if self.__verbose:
-            fabric_output = []
+            settings(show('running', 'stdout', 'stderr'))
 
-        with settings(hide(*fabric_output)):
-            run(script)
+        run(script)
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
