@@ -123,7 +123,8 @@ class AmiEc2:
     def create_image(self):
         self.__image = self.__awscli.ec2('create-image',
                                          '--instance-id', self.__instance['InstanceId'],
-                                         '--name', self.__recipe['ami_tags']['Name'])
+                                         '--name', self.__recipe['ami_tags']['Name'],
+                                         '--reboot')
 
         if not self.__image:
             raise Exception('Image creation for instance %s failed.' % self.__instance['InstanceId'])
