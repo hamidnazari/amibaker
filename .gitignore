@@ -1,4 +1,5 @@
 /.python-version
 /venv
+/recipes
 /.idea
 /*.iml
