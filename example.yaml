@@ -7,20 +7,21 @@ base_ami: ami-fd9cecc7
 instance_type: t2.micro
 subnet_id: subnet-a1b2c3d4
 key_name: my_key
+associate_public_ip: yes
 # security_groups:
 #   - sg-e5f6g7h8
 ssh_username: ec2-user
 
 ami_tags:
   Name: Base Image {{ timestamp }}
-  Cost Centre: PROJ0574
+  Cost Centre: My Project
+  Provisioner: AmiBaker
 
 ec2_tags:
   Name: amibaker - Base Image {{ timestamp }}
-  Cost Centre: PROJ0574
+  Cost Centre: My Project
   Availability: Manual
 
 provisioning_script: |
  sudo yum update -y
  sudo yum install -y telnet
-

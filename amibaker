@@ -14,7 +14,7 @@ class AmiBaker:
     def __init__(self, recipe, **kwargs):
         self.__recipe = yaml.load(recipe)
         self.__render_tags()
-        self.__verbose = kwargs.get('verbose', False)
+        self.__quiet = kwargs.get('quiet', False)
         self.__keep_instance = kwargs.get('keep_instance', False)
 
     def __render_tags(self):
@@ -35,10 +35,10 @@ class AmiBaker:
         render(self.__recipe['ami_tags'], timestamp=timestamp)
 
     def bake(self):
-        ec2 = AmiEc2(verbose=self.__verbose, recipe=self.__recipe)
+        ec2 = AmiEc2(quiet=self.__quiet, recipe=self.__recipe)
         ec2.instantiate()
 
-        provisioner = Provisioner(ec2, verbose=self.__verbose)
+        provisioner = Provisioner(ec2, quiet=self.__quiet)
         provisioner.provision(self.__recipe['provisioning_script'])
 
         image_id = ec2.create_image()
@@ -52,8 +52,8 @@ class AmiBaker:
 
 class AmiEc2:
     def __init__(self, **kwrags):
-        self.__verbose = kwrags.get('verbose', False)
-        self.__awscli = AWSCLPy(quiet=not self.__verbose, **kwrags['recipe']['awscli_args'])
+        self.__quiet = kwrags.get('quiet', False)
+        self.__awscli = AWSCLPy(quiet=self.__quiet, **kwrags['recipe']['awscli_args'])
         self.__recipe = kwrags['recipe']
 
     def instantiate(self):
@@ -72,11 +72,14 @@ class AmiEc2:
                                      '--key-name', key_name,
                                      '--security-group-ids', security_group,
                                      '--instance-type', self.__recipe['instance_type'],
-                                     '--subnet-id', self.__recipe['subnet_id'])
+                                     '--subnet-id', self.__recipe['subnet_id'],
+                                     '--associate-public-ip-address' if self.__recipe['associate_public_ip'] else '--no-associate-public-ip-address')
 
         self.__instance = instance['Instances'][0]
 
         self.tag(self.__instance['InstanceId'], self.__recipe['ec2_tags'])
+
+        self.__describe_instance()
 
     def terminate(self):
         self.__awscli.ec2('terminate-instances',
@@ -133,6 +136,14 @@ class AmiEc2:
 
         return self.__image['ImageId']
 
+    def __describe_instance(self):
+        self.wait_until_running()
+
+        instance = self.__awscli.ec2('describe-instances',
+                                     '--instance-ids', self.__instance['InstanceId'])
+
+        self.__instance = instance['Reservations'][0]['Instances'][0]
+
     def __get_vpc_id(self):
         subnet = self.__awscli.ec2('describe-subnets',
                                    '--subnet-ids', self.__recipe['subnet_id'])
@@ -153,6 +164,12 @@ class AmiEc2:
                           '--port', 22,
                           '--cidr', '0.0.0.0/0')
 
+        self.__awscli.ec2('authorize-security-group-egress',
+                          '--group-id', security_group['GroupId'],
+                          '--protocol', 'tcp',
+                          '--port', -1,
+                          '--cidr', '0.0.0.0/0')
+
         self.security_group = security_group['GroupId']
 
     def __delete_security_group(self):
@@ -171,11 +188,9 @@ class AmiEc2:
 class Provisioner:
     def __init__(self, ec2, **kwargs):
         self.__ec2 = ec2
-        self.__verbose = kwargs.get('verbose', False)
+        self.__quiet = kwargs.get('quiet', False)
 
     def provision(self, script):
-        self.__ec2.wait_until_running()
-
         env.host_string = self.__ec2.get_hostname() # host to connect to
         env.user = self.__ec2.get_username() # ssh user to be used for this session
         env.password = None # no passwords available, use private key
@@ -186,10 +201,8 @@ class Provisioner:
         env.timeout = 15 # how many seconds until considered failed attempt
         env.colorize_errors = True
 
-        settings(hide('warnings', 'running', 'stdout', 'stderr'))
-
-        if self.__verbose:
-            settings(show('running', 'stdout', 'stderr'))
+        if self.__quiet:
+            settings(hide('warnings', 'running', 'stdout', 'stderr'))
 
         run(script)
 
@@ -201,15 +214,15 @@ if __name__ == "__main__":
                            type=argparse.FileType('r'),
                            help='Recipe to bake image from.')
 
-    argparser.add_argument('-v', '--verbose',
+    argparser.add_argument('-q', '--quiet',
                            action='store_true',
-                           help='Prints commands being run in the background.')
+                           help='Prevents messages from being printed to stdout.')
 
     argparser.add_argument('-k', '--keep-instance',
                            action='store_true',
                            help='Keeps EC2 instance after provisioning is done.')
 
-    argparser.add_argument('-V', '--version',
+    argparser.add_argument('-v', '--version',
                            action='version',
                            version='%(prog)s ' + VERSION,
                            help='Shows version number.')
@@ -218,6 +231,6 @@ if __name__ == "__main__":
 
     for recipe in args.recipe:
         baker = AmiBaker(recipe,
-                         verbose=args.verbose,
+                         quiet=args.quiet,
                          keep_instance=args.keep_instance)
         baker.bake()
