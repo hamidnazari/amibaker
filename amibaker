@@ -23,10 +23,10 @@ class AmiBaker:
                 template = Template(value)
                 tags[key] = template.render(**kwargs)
 
-        if self.__recipe['ami_tags']['Name']:
+        if not self.__recipe['ami_tags']['Name']:
             self.__recipe['ami_tags']['Name'] = 'amibaker - {{ timestamp }}'
 
-        if self.__recipe['ec2_tags']['Name']:
+        if not self.__recipe['ec2_tags']['Name']:
             self.__recipe['ec2_tags']['Name'] = self.__recipe['ami_tags']['Name']
 
         timestamp = int(time.time())
@@ -154,7 +154,7 @@ class AmiEc2:
         vpc_id = self.__get_vpc_id()
 
         security_group = self.__awscli.ec2('create-security-group',
-                                           '--group-name', self.__recipe['ami_tags']['Name'],
+                                           '--group-name', self.__recipe['ec2_tags']['Name'],
                                            '--description', 'Allows temporary SSH access to the box.',
                                            '--vpc-id', vpc_id)
 

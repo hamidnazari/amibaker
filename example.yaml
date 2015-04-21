@@ -3,7 +3,7 @@ awscli_args:
   default_region: ap-southeast-2
 
 base_ami: ami-fd9cecc7
-# TODO: Support other accounts
+# TODO: Support AMI's from other accounts
 instance_type: t2.micro
 subnet_id: subnet-a1b2c3d4
 key_name: my_key
