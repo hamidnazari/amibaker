@@ -167,7 +167,7 @@ class AmiEc2:
         self.__awscli.ec2('authorize-security-group-egress',
                           '--group-id', security_group['GroupId'],
                           '--protocol', 'tcp',
-                          '--port', -1,
+                          '--port', '0-65535',
                           '--cidr', '0.0.0.0/0')
 
         self.security_group = security_group['GroupId']
