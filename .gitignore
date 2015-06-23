@@ -3,3 +3,7 @@
 /recipes
 /.idea
 /*.iml
+*.pyc
+/build/
+/dist/
+/*.egg-info
