@@ -3,12 +3,12 @@
 import yaml
 import argparse
 import time
+# import amibaker
 from jinja2 import Template
 from awsclpy import AWSCLPy
 from fabric.api import run, env, settings, hide, show
 
 VERSION = '0.1'
-
 
 class AmiBaker:
     def __init__(self, recipe, **kwargs):
@@ -206,7 +206,7 @@ class Provisioner:
 
         run(script)
 
-if __name__ == "__main__":
+def main():
     argparser = argparse.ArgumentParser()
 
     argparser.add_argument('recipe',
