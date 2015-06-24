@@ -1,8 +1,10 @@
+import pip
 from setuptools import setup
 from pip.req import parse_requirements
 from amibaker.version import VERSION
 
-install_reqs = parse_requirements("./requirements.txt")
+install_reqs = parse_requirements("./requirements.txt",
+                                  session=pip.download.PipSession())
 reqs = [str(ir.req) for ir in install_reqs]
 
 setup(
