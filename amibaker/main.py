@@ -3,12 +3,12 @@
 import yaml
 import argparse
 import time
-# import amibaker
 from jinja2 import Template
 from awsclpy import AWSCLPy
-from fabric.api import run, env, settings, hide, show
+from fabric.api import run, env, settings, hide
 
 VERSION = '0.1'
+
 
 class AmiBaker:
     def __init__(self, recipe, **kwargs):
@@ -27,7 +27,8 @@ class AmiBaker:
             self.__recipe['ami_tags']['Name'] = 'amibaker - {{ timestamp }}'
 
         if not self.__recipe['ec2_tags']['Name']:
-            self.__recipe['ec2_tags']['Name'] = self.__recipe['ami_tags']['Name']
+            self.__recipe['ec2_tags']['Name'] = \
+                self.__recipe['ami_tags']['Name']
 
         timestamp = int(time.time())
 
@@ -47,13 +48,15 @@ class AmiBaker:
             ec2.wait_until_image_available()
             ec2.terminate()
 
-        print 'Your AMI has been cooked and is ready to be consumed: ' + image_id
+        print 'Your AMI has been cooked and is ready to be consumed: ' + \
+            image_id
 
 
 class AmiEc2:
     def __init__(self, **kwrags):
         self.__quiet = kwrags.get('quiet', False)
-        self.__awscli = AWSCLPy(quiet=self.__quiet, **kwrags['recipe']['awscli_args'])
+        self.__awscli = AWSCLPy(quiet=self.__quiet,
+                                **kwrags['recipe']['awscli_args'])
         self.__recipe = kwrags['recipe']
 
     def instantiate(self):
@@ -67,13 +70,16 @@ class AmiEc2:
             self.__generate_key_pair()
             key_name = self.key_name
 
-        instance = self.__awscli.ec2('run-instances',
-                                     '--image-id', self.__recipe['base_ami'],
-                                     '--key-name', key_name,
-                                     '--security-group-ids', security_group,
-                                     '--instance-type', self.__recipe['instance_type'],
-                                     '--subnet-id', self.__recipe['subnet_id'],
-                                     '--associate-public-ip-address' if self.__recipe['associate_public_ip'] else '--no-associate-public-ip-address')
+        instance = self.__awscli.ec2(
+            'run-instances',
+            '--image-id', self.__recipe['base_ami'],
+            '--key-name', key_name,
+            '--security-group-ids', security_group,
+            '--instance-type', self.__recipe['instance_type'],
+            '--subnet-id', self.__recipe['subnet_id'],
+            '--associate-public-ip-address'
+            if self.__recipe['associate_public_ip'] else
+            '--no-associate-public-ip-address')
 
         self.__instance = instance['Instances'][0]
 
@@ -117,20 +123,23 @@ class AmiEc2:
         return self.__recipe.get('ssh_username')
 
     def tag(self, resource, tags):
-        tags = ["Key=%s,Value=%s" % (key, value) for key, value in tags.iteritems()]
+        tags = ["Key=%s,Value=%s" % (key, value) for key, value in
+                tags.iteritems()]
 
         self.__awscli.ec2('create-tags',
                           '--resources', resource,
                           '--tags', tags)
 
     def create_image(self):
-        self.__image = self.__awscli.ec2('create-image',
-                                         '--instance-id', self.__instance['InstanceId'],
-                                         '--name', self.__recipe['ami_tags']['Name'],
-                                         '--reboot')
+        self.__image = self.__awscli.ec2(
+            'create-image',
+            '--instance-id', self.__instance['InstanceId'],
+            '--name', self.__recipe['ami_tags']['Name'],
+            '--reboot')
 
         if not self.__image:
-            raise Exception('Image creation for instance %s failed.' % self.__instance['InstanceId'])
+            raise Exception('Image creation for instance %s failed.' %
+                            self.__instance['InstanceId'])
 
         self.tag(self.__image['ImageId'], self.__recipe['ami_tags'])
 
@@ -140,7 +149,8 @@ class AmiEc2:
         self.wait_until_running()
 
         instance = self.__awscli.ec2('describe-instances',
-                                     '--instance-ids', self.__instance['InstanceId'])
+                                     '--instance-ids',
+                                     self.__instance['InstanceId'])
 
         self.__instance = instance['Reservations'][0]['Instances'][0]
 
@@ -153,10 +163,11 @@ class AmiEc2:
     def __create_security_group(self):
         vpc_id = self.__get_vpc_id()
 
-        security_group = self.__awscli.ec2('create-security-group',
-                                           '--group-name', self.__recipe['ec2_tags']['Name'],
-                                           '--description', 'Allows temporary SSH access to the box.',
-                                           '--vpc-id', vpc_id)
+        security_group = self.__awscli.ec2(
+            'create-security-group',
+            '--group-name', self.__recipe['ec2_tags']['Name'],
+            '--description', 'Allows temporary SSH access to the box.',
+            '--vpc-id', vpc_id)
 
         self.__awscli.ec2('authorize-security-group-ingress',
                           '--group-id', security_group['GroupId'],
@@ -191,14 +202,30 @@ class Provisioner:
         self.__quiet = kwargs.get('quiet', False)
 
     def provision(self, script):
-        env.host_string = self.__ec2.get_hostname() # host to connect to
-        env.user = self.__ec2.get_username() # ssh user to be used for this session
-        env.password = None # no passwords available, use private key
-        env.use_ssh_config = True # use ~/.ssh/config if avaialble
-        env.eagerly_disconnect = True # disconnect right after work is done
-        env.skip_bad_hosts = True # no need to check fingerprint
-        env.connection_attempts = 6 # number of ssh attemps
-        env.timeout = 15 # how many seconds until considered failed attempt
+        # host to connect to
+        env.host_string = self.__ec2.get_hostname()
+
+        # ssh user to be used for this session
+        env.user = self.__ec2.get_username()
+
+        # no passwords available, use private key
+        env.password = None
+
+        # use ~/.ssh/config if avaialble
+        env.use_ssh_config = True
+
+        # disconnect right after work is done
+        env.eagerly_disconnect = True
+
+        # no need to check fingerprint
+        env.skip_bad_hosts = True
+
+        # number of ssh attemps
+        env.connection_attempts = 6
+
+        # how many seconds until considered failed attempt
+        env.timeout = 15
+
         env.colorize_errors = True
 
         if self.__quiet:
@@ -206,26 +233,31 @@ class Provisioner:
 
         run(script)
 
+
 def main():
     argparser = argparse.ArgumentParser()
 
-    argparser.add_argument('recipe',
-                           nargs='+',
-                           type=argparse.FileType('r'),
-                           help='Recipe to bake image from.')
+    argparser.add_argument(
+        'recipe',
+        nargs='+',
+        type=argparse.FileType('r'),
+        help='Recipe to bake image from.')
 
-    argparser.add_argument('-q', '--quiet',
-                           action='store_true',
-                           help='Prevents messages from being printed to stdout.')
+    argparser.add_argument(
+        '-q', '--quiet',
+        action='store_true',
+        help='Prevents messages from being printed to stdout.')
 
-    argparser.add_argument('-k', '--keep-instance',
-                           action='store_true',
-                           help='Keeps EC2 instance after provisioning is done.')
+    argparser.add_argument(
+        '-k', '--keep-instance',
+        action='store_true',
+        help='Keeps EC2 instance after provisioning is done.')
 
-    argparser.add_argument('-v', '--version',
-                           action='version',
-                           version='%(prog)s ' + VERSION,
-                           help='Shows version number.')
+    argparser.add_argument(
+        '-v', '--version',
+        action='version',
+        version='%(prog)s ' + VERSION,
+        help='Shows version number.')
 
     args = argparser.parse_args()
 
