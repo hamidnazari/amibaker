@@ -6,8 +6,7 @@ import time
 from jinja2 import Template
 from awsclpy import AWSCLPy
 from fabric.api import run, env, settings, hide
-
-VERSION = '0.1'
+from .version import VERSION
 
 
 class AmiBaker:
