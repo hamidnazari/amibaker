@@ -1,3 +1,4 @@
+import json
 from awsclpy import AWSCLPy
 
 
@@ -86,6 +87,11 @@ class AmiEc2:
             '--name', self.__recipe['ami_tags']['Name'],
             '--reboot')
 
+        ami_permissions = self.__recipe.get('ami_permissions')
+
+        if ami_permissions:
+            self.__share_image(ami_permissions)
+
         if not self.__image:
             raise Exception('Image creation for instance %s failed.' %
                             self.__instance['InstanceId'])
@@ -93,6 +99,16 @@ class AmiEc2:
         self.tag(self.__image['ImageId'], self.__recipe['ami_tags'])
 
         return self.__image['ImageId']
+
+    def __share_image(self, account_ids):
+        permissions = {'Add': []}
+
+        for account_id in account_ids:
+            permissions['Add'].append({'UserId': str(account_id)})
+
+        self.__awscli.ec2('modify-image-attribute',
+                          '--image-id', self.__image['ImageId'],
+                          '--launch-permission', json.dumps(permissions))
 
     def __describe_instance(self):
         self.wait_until_running()

@@ -53,7 +53,10 @@ provisioning_script: |
 
 ## Roadmap
 * Add tests
-* Support image sharing
 * Support simple file sharing / one-way sync
 * Support execution from one or more scripts
 * Replace AWSCLI with Boto3
+* Travis CI
+* No reboot option
+* Improve documentation
+* Generate keys if not provided
