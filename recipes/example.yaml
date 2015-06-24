@@ -1,26 +1,32 @@
 awscli_args:
   profile: my_profile
-  default_region: ap-southeast-2
+  region: ap-southeast-2 # TODO: optional, otherwise uses awscli profile region
 
 base_ami: ami-fd9cecc7
-# TODO: Support AMI's from other accounts
 instance_type: t2.micro
 subnet_id: subnet-a1b2c3d4
 key_name: my_key
 associate_public_ip: no
-# security_groups:
-#   - sg-e5f6g7h8
+
 ssh_username: ec2-user
+
+security_groups: # optional, otherwise creates a temporary SG with proper rules
+  - sg-e5f6g7h8
+
+ec2_tags:
+  Name: amibaker - Base Image {{ timestamp }}
+  Cost Centre: My Project
+  Availability: Manual
 
 ami_tags:
   Name: Base Image {{ timestamp }}
   Cost Centre: My Project
   Provisioner: AmiBaker
 
-ec2_tags:
-  Name: amibaker - Base Image {{ timestamp }}
-  Cost Centre: My Project
-  Availability: Manual
+ami_permissions: # TODO: Add support for sharing images
+  - 123456789012
+  - 345678901234
+  - 567890123456
 
 provisioning_script: |
  sudo yum update -y

@@ -24,35 +24,36 @@ AmiBaker templates are [YAML](http://yaml.org/) files.
 ```yaml
 awscli_args:
   profile: my_profile
-  default_region: ap-southeast-2
 
 base_ami: ami-fd9cecc7
 instance_type: t2.micro
 subnet_id: subnet-a1b2c3d4
 key_name: my_key
 associate_public_ip: no
-security_groups:
-  - sg-b2c3d4e5
+
 ssh_username: ec2-user
 
-ami_tags:
-  Name: Base Image {{ timestamp }}
-  Cost Centre: My Project
-  Provisioner: AmiBaker
+security_groups:
+  - sg-e5f6g7h8
 
 ec2_tags:
   Name: amibaker - Base Image {{ timestamp }}
   Cost Centre: My Project
   Availability: Manual
 
+ami_tags:
+  Name: Base Image {{ timestamp }}
+  Cost Centre: My Project
+  Provisioner: AmiBaker
+
 provisioning_script: |
  sudo yum update -y
  sudo yum install -y telnet
 ```
-
 
 ## Roadmap
 * Add tests
 * Support image sharing
 * Support simple file sharing / one-way sync
 * Support execution from one or more scripts
+* Replace AWSCLI with Boto3
