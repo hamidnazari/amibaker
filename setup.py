@@ -34,8 +34,9 @@ setup(name='amibaker',
         ],
       },
       install_requires=[
-          "awsclpy",
-          "fabric",
-          "jinja2",
+          "awsclpy==0.2.2",
+          "Fabric==1.10.2",
+          "Jinja2==2.7.3",
+          "PyYAML==3.11",
       ],
       zip_safe=False)
