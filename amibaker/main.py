@@ -24,6 +24,11 @@ def main():
         action='store_true',
         help='Keeps EC2 instance after provisioning is done.')
 
+    argparser.add_argument( # TODO
+        '-p', '--pause',
+        action='store_true',
+        help='Waits for confirmation before commencing imaging process.')
+
     argparser.add_argument(
         '-v', '--version',
         action='version',
