@@ -1,11 +1,5 @@
-import pip
 from setuptools import setup
-from pip.req import parse_requirements
 from amibaker.version import VERSION
-
-install_reqs = parse_requirements("./requirements.txt",
-                                  session=pip.download.PipSession())
-reqs = [str(ir.req) for ir in install_reqs]
 
 setup(
     name='amibaker',
@@ -45,5 +39,10 @@ setup(
             'amibaker = amibaker.main:main',
         ],
     },
-    install_requires=reqs,
+    install_requires=[
+        'awsclpy==0.3.5',
+        'Fabric==1.10.2',
+        'Jinja2==2.7.3',
+        'PyYAML==3.11'
+    ],
     zip_safe=False)
