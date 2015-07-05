@@ -35,6 +35,8 @@ setup(
     ],
     author='Hamid Nazari',
     author_email='hn@linux.com',
+    maintainer='Hamid Nazari',
+    maintainer_email='hn@linux.com',
     url='http://github.com/hamidnazari/amibaker',
     license='MIT',
     packages=['amibaker'],
