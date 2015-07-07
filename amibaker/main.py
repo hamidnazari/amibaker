@@ -2,7 +2,7 @@
 
 import argparse
 from .version import VERSION
-from ami_baker import AmiBaker
+from .ami_baker import AmiBaker
 
 
 def main():

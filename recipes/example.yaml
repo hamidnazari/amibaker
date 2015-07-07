@@ -36,9 +36,12 @@ ami_permissions:
   - 345678901234
   - 567890123456
 
-copy_files:
-  - /path/to/some_file: /path/to/destination_dir/
-  - /path/to/another_file: /path/to/destination_file
+copy:
+  - from: /path/to/some_file:
+    to: /path/to/destination_dir/
+  - from: /path/to/another_file
+    to: /path/to/destination_file
+    chmod: 600
 
 provisioning_script: |
  sudo yum update -y
