@@ -49,7 +49,6 @@ class Provisioner:
         run(script)
 
     def __copy(self, copy):
-        return put()
         for f in copy:
             opts = {}
 
@@ -57,4 +56,4 @@ class Provisioner:
             if chmod:
                 opts['chmod'] = chmod
 
-            # put(f['from'], f['to'], **opts)
+            put(f['from'], f['to'], **opts)
