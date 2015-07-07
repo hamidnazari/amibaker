@@ -26,14 +26,20 @@ class TestProvisioner(unittest.TestCase):
         for i in xrange(0, times):
             source.append("/path/to/source%d" % i)
             target.append("/path/to/target%d" % i)
-            chmod.append((i+1) * 222) # 222, 444, 666
-            copy.append({'from': source[i], 'to': target[i], 'chmod': chmod[i]})
+            chmod.append((i+1) * 222)  # 222, 444, 666
+
+            copy.append({'from': source[i],
+                         'to': target[i],
+                         'chmod': chmod[i]})
 
         with patch('amibaker.provisioner.put', return_value=True) as put:
             self.provisioner._Provisioner__copy(copy)
 
-            self.assertEqual(put.call_count, times, "put() should've been called as many times there are files to be copied")
+            self.assertEqual(put.call_count, times,
+                             "put() should have been called as many times "
+                             "there are files to be copied")
 
-            calls = [put(source[i], target[i], chmod=chmod[i]) for i in reversed(xrange(0, times))]
+            calls = [put(source[i], target[i], chmod=chmod[i])
+                     for i in reversed(xrange(0, times))]
+
             put.has_calls(calls)
-

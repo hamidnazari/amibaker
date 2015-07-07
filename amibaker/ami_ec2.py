@@ -27,17 +27,22 @@ class AmiEc2:
             instance_profile_arn = instance_profile.get('arn')
             instance_profile_name = instance_profile.get('name')
         elif isinstance(ami_roles, list):
-            instance_profile_arn, instance_profile_name = self.__create_iam_instance_profile(ami_roles)
+            instance_profile_arn, instance_profile_name = \
+                self.__create_iam_instance_profile(ami_roles)
         else:
             instance_profile_arn = instance_profile_name = None
 
         iam_instance_profile = []
 
         if instance_profile_arn:
-            iam_instance_profile.append('='.join(['Arn', instance_profile_arn]))
+            iam_instance_profile.append(
+                '='.join(['Arn', instance_profile_arn])
+            )
 
         if instance_profile_name:
-            iam_instance_profile.append('='.join(['Name', instance_profile_name]))
+            iam_instance_profile.append(
+                '='.join(['Name', instance_profile_name])
+            )
 
         iam_instance_profile = ",".join(instance_profile)
 
@@ -190,8 +195,9 @@ class AmiEc2:
         pass
 
     def __create_iam_instance_profile(self, ami_roles):
-        iam_instance_profile = self.__awscli.iam('create-instance-profile',
-                                                 '--instance-profile-name', 'AmiBaker')
+        iam_instance_profile = self.__awscli.iam(
+            'create-instance-profile',
+            '--instance-profile-name', 'AmiBaker')
 
         self.iam_instance_profile = iam_instance_profile['InstanceProfile']
 
@@ -200,11 +206,11 @@ class AmiEc2:
                               '--instance-profile-name', 'AmiBaker',
                               '--role-name', role)
 
-        return self.iam_instance_profile['InstanceProfileName'], self.iam_instance_profile['Arn']
+        return (self.iam_instance_profile['InstanceProfileName'],
+                self.iam_instance_profile['Arn'])
 
     def __delete_iam_instance_profile(self):
         self.__awscli.iam('delete-instance-profile',
                           '--instance-profile-name', 'AmiBaker')
 
         self.iam_instance_profile = None
-
