@@ -33,7 +33,15 @@ associate_public_ip: no
 
 ssh_username: ec2-user
 
-security_groups:
+iam_instance_profile:
+  name: my-profile
+  arn:
+
+iam_roles:
+  - my-role-1
+  - my-role-2
+
+security_groups: # optional, otherwise creates a temporary SG with proper rules
   - sg-e5f6g7h8
 
 ec2_tags:
@@ -46,6 +54,18 @@ ami_tags:
   Cost Centre: My Project
   Provisioner: AmiBaker
 
+ami_permissions:
+  - 123456789012
+  - 345678901234
+  - 567890123456
+
+copy:
+  - from: /path/to/some_file:
+    to: /path/to/destination_dir/
+  - from: /path/to/another_file
+    to: /path/to/destination_file
+    mode: 0600
+
 provisioning_script: |
  sudo yum update -y
  sudo yum install -y telnet
@@ -53,10 +73,10 @@ provisioning_script: |
 
 ## Roadmap
 * Add tests
-* Support simple file sharing / one-way sync
 * Support execution from one or more scripts
 * Replace AWSCLI with Boto3
 * Travis CI
 * No reboot option
 * Improve documentation
 * Generate keys if not provided
+* Eliminate dependency to Fabric and use Paramiko instead

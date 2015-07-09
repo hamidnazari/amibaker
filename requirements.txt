@@ -1,4 +1,1 @@
-awsclpy==0.2.2
-Fabric==1.10.2
-Jinja2==2.7.3
-PyYAML==3.11
+-e .

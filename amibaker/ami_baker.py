@@ -2,7 +2,7 @@ import yaml
 import time
 from jinja2 import Template
 from .ami_ec2 import AmiEc2
-from provisioner import Provisioner
+from .provisioner import Provisioner
 
 
 class AmiBaker:
@@ -35,7 +35,18 @@ class AmiBaker:
         ec2.instantiate()
 
         provisioner = Provisioner(ec2, quiet=self.__quiet)
-        provisioner.provision(self.__recipe['provisioning_script'])
+
+        provision_args = {}
+
+        copy = self.__recipe.get('copy')
+        if copy:
+            provision_args['copy'] = copy
+
+        script = self.__recipe.get('provisioning_script')
+        if script:
+            provision_args['script'] = script
+
+        provisioner.provision(**provision_args)
 
         image_id = ec2.create_image()
 
@@ -43,5 +54,5 @@ class AmiBaker:
             ec2.wait_until_image_available()
             ec2.terminate()
 
-        print 'Your AMI has been cooked and is ready to be consumed: ' + \
-            image_id
+        print('Your AMI has been cooked and is ready to be consumed: ' +
+              image_id)
