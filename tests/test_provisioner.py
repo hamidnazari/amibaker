@@ -1,4 +1,5 @@
 import unittest
+import contextlib
 from mock import Mock, patch
 from amibaker.provisioner import Provisioner
 
@@ -32,7 +33,10 @@ class TestProvisioner(unittest.TestCase):
                          'to': target[i],
                          'mode': mode[i]})
 
-        with patch('amibaker.provisioner.put', return_value=True) as put:
+        with contextlib.nested(
+                patch('amibaker.provisioner.put', return_value=True),
+                patch('amibaker.provisioner.sudo', return_value=True)
+            ) as (put, sudo):
             self.provisioner._Provisioner__copy(copy)
 
             self.assertEqual(put.call_count, times,
