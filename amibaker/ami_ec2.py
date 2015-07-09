@@ -44,7 +44,11 @@ class AmiEc2:
                 '='.join(['Name', instance_profile_name])
             )
 
-        iam_instance_profile = ",".join(instance_profile)
+        if iam_instance_profile:
+            iam_instance_profile = [
+                '--iam-instance-profile',
+                ','.join(iam_instance_profile)
+            ]
 
         associate_public_ip_address = \
             '--associate-public-ip-address' \
