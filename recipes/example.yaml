@@ -41,7 +41,7 @@ copy:
     to: /path/to/destination_dir/
   - from: /path/to/another_file
     to: /path/to/destination_file
-    chmod: 600
+    mode: 0600
 
 provisioning_script: |
  sudo yum update -y

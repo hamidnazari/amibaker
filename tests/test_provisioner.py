@@ -21,16 +21,16 @@ class TestProvisioner(unittest.TestCase):
         copy = []
         source = []
         target = []
-        chmod = []
+        mode = []
 
         for i in xrange(0, times):
             source.append("/path/to/source%d" % i)
             target.append("/path/to/target%d" % i)
-            chmod.append((i+1) * 222)  # 222, 444, 666
+            mode.append((i+1) * 222)  # 222, 444, 666
 
             copy.append({'from': source[i],
                          'to': target[i],
-                         'chmod': chmod[i]})
+                         'mode': mode[i]})
 
         with patch('amibaker.provisioner.put', return_value=True) as put:
             self.provisioner._Provisioner__copy(copy)
@@ -39,7 +39,7 @@ class TestProvisioner(unittest.TestCase):
                              "put() should have been called as many times "
                              "there are files to be copied")
 
-            calls = [put(source[i], target[i], chmod=chmod[i])
+            calls = [put(source[i], target[i], mode=mode[i])
                      for i in reversed(xrange(0, times))]
 
             put.has_calls(calls)

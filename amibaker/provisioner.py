@@ -1,6 +1,6 @@
 from fabric.api import env, settings, hide
-from fabric.operations import run, put
-
+from fabric.operations import run, put, sudo
+from os import path
 
 class Provisioner:
     def __init__(self, ec2, **kwargs):
@@ -51,10 +51,15 @@ class Provisioner:
 
     def __copy(self, copy):
         for f in copy:
-            opts = {}
+            opts = {
+                'use_sudo': True
+            }
 
-            chmod = f.get('chmod')
-            if chmod:
-                opts['chmod'] = chmod
+            to_dir = path.dirname(f['to'])
+            sudo("mkdir -p %s" % to_dir)
+
+            mode = f.get('mode')
+            if mode:
+                opts['mode'] = mode
 
             put(f['from'], f['to'], **opts)
