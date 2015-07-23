@@ -54,5 +54,5 @@ class AmiBaker:
             ec2.wait_until_image_available()
             ec2.terminate()
 
-        print('Your AMI has been cooked and is ready to be consumed: ' +
+        print('Your AMI has been baked and is ready to be consumed: ' +
               image_id)
