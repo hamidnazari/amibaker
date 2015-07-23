@@ -144,6 +144,7 @@ class AmiEc2:
         for account_id in account_ids:
             permissions['Add'].append({'UserId': str(account_id)})
 
+        self.wait_until_image_available()
         self.__awscli.ec2('modify-image-attribute',
                           '--image-id', self.__image['ImageId'],
                           '--launch-permission', json.dumps(permissions))
