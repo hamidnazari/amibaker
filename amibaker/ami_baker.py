@@ -11,7 +11,11 @@ class AmiBaker:
         self.__render_tags()
         self.__quiet = kwargs.get('quiet', False)
         self.__keep_instance = kwargs.get('keep_instance', False)
-        self.__override_base_ami = kwargs.get('override_base_ami', None)
+        self.__parse_base_ami(kwargs.get('override_base_ami', None))
+
+    @staticmethod
+    def __default_name():
+        return 'amibaker - {{ timestamp }}'
 
     def __render_tags(self):
         def render(tags, **kwargs):
@@ -19,25 +23,33 @@ class AmiBaker:
                 template = Template(value)
                 tags[key] = template.render(**kwargs)
 
-        if not self.__recipe['ami_tags']['Name']:
-            self.__recipe['ami_tags']['Name'] = 'amibaker - {{ timestamp }}'
+        if 'ami_tags' in self.__recipe:
+            if not self.__recipe['ami_tags']['Name']:
+                self.__recipe['ami_tags']['Name'] = self.__default_name()
+        else:
+            self.__recipe['ami_tags'] = dict(Name=self.__default_name())
 
-        if not self.__recipe['ec2_tags']['Name']:
-            self.__recipe['ec2_tags']['Name'] = \
-                self.__recipe['ami_tags']['Name']
+        if 'ec2_tags' in self.__recipe:
+            if not self.__recipe['ec2_tags']['Name']:
+                self.__recipe['ec2_tags']['Name'] = \
+                    self.__recipe['ami_tags']['Name']
+        else:
+            self.__recipe['ec2_tags'] = dict(Name=self.__recipe['ami_tags']['Name'])
 
         timestamp = int(time.time())
 
         render(self.__recipe['ec2_tags'], timestamp=timestamp)
         render(self.__recipe['ami_tags'], timestamp=timestamp)
 
-    def bake(self):
-        if self.__override_base_ami:
-            self.__recipe['base_ami'] = self.__override_base_ami
+    def __parse_base_ami(self, override_base_ami):
+        if override_base_ami:
+            self.__recipe['base_ami'] = override_base_ami
 
         if 'base_ami' not in self.__recipe:
             raise ValueError('You must specify a base_ami on the command line or in the recipe')
+        self._foo = self.__recipe
 
+    def bake(self):
         ec2 = AmiEc2(quiet=self.__quiet, recipe=self.__recipe)
         ec2.instantiate()
 
