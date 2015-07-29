@@ -11,6 +11,7 @@ class AmiBaker:
         self.__render_tags()
         self.__quiet = kwargs.get('quiet', False)
         self.__keep_instance = kwargs.get('keep_instance', False)
+        self.__override_base_ami = kwargs.get('override_base_ami', None)
 
     def __render_tags(self):
         def render(tags, **kwargs):
@@ -31,6 +32,12 @@ class AmiBaker:
         render(self.__recipe['ami_tags'], timestamp=timestamp)
 
     def bake(self):
+        if self.__override_base_ami:
+            self.__recipe['base_ami'] = self.__override_base_ami
+
+        if 'base_ami' not in self.__recipe:
+            raise ValueError('You must specify a base_ami on the command line or in the recipe')
+
         ec2 = AmiEc2(quiet=self.__quiet, recipe=self.__recipe)
         ec2.instantiate()
 

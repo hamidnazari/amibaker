@@ -30,10 +30,16 @@ def main():
         version='%(prog)s ' + VERSION,
         help='Shows version number.')
 
-    args = argparser.parse_args()
+    argparser.add_argument(
+        '-b', '--base-ami',
+        action='store',
+        help='Specify base_ami, supersedes any base_ami specified in recipe'
+    )
 
+    args = argparser.parse_args()
     for recipe in args.recipe:
         baker = AmiBaker(recipe,
                          quiet=args.quiet,
-                         keep_instance=args.keep_instance)
+                         keep_instance=args.keep_instance,
+                         override_base_ami=args.base_ami)
         baker.bake()
