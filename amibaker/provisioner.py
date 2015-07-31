@@ -32,11 +32,13 @@ class Provisioner:
         # no need to check fingerprint
         env.skip_bad_hosts = True
 
+        # TODO: Make this configurable through recipe YAML
         # number of ssh attempts
-        env.connection_attempts = 6
+        env.connection_attempts = 10
 
+        # TODO: Make this configurable through recipe YAML
         # how many seconds until considered failed attempt
-        env.timeout = 15
+        env.timeout = 30
 
         env.colorize_errors = True
 
