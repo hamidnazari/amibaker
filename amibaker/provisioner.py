@@ -30,7 +30,7 @@ class Provisioner:
         env.eagerly_disconnect = True
 
         # no need to check fingerprint
-        env.skip_bad_hosts = True
+        env.disable_known_hosts = True
 
         # TODO: Make this configurable through recipe YAML
         # number of ssh attempts
