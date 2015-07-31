@@ -49,7 +49,7 @@ class Provisioner:
             self.__run(script)
 
     def __run(self, script):
-        run(script)
+        run(script, warn_only=True)
 
     def __copy(self, copy):
         for f in copy:
