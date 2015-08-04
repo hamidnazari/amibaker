@@ -1,5 +1,4 @@
 import yaml
-import time
 from jinja2 import Template
 from .ami_ec2 import AmiEc2
 from .provisioner import Provisioner

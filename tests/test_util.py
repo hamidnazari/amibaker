@@ -1,5 +1,5 @@
 import time
-import datetime 
+import datetime
 import unittest
 import StringIO
 
@@ -7,13 +7,14 @@ from amibaker.util import EpochDateTime
 
 from amibaker.ami_baker import AmiBaker
 
+
 class TestEpochDateTime(unittest.TestCase):
 
     def test_str_is_like_a_epoch_timestamp(self):
         mark = int(time.time())
         edt = EpochDateTime.now()
         result = edt.__str__()
-        assert result >= result
+        assert result >= mark
         assert '.' not in result
 
     def test_strftime_still_works(self):

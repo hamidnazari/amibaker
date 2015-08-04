@@ -1,10 +1,10 @@
 import unittest
 
 import StringIO
-from argparse import Namespace
 from functools import partial
 
 from amibaker.ami_baker import AmiBaker
+
 
 class TestAmiBaker(unittest.TestCase):
     def setUp(self):
@@ -45,7 +45,6 @@ associate_public_ip: no
         ''')
         a = AmiBaker(fake_recipe)
         assert a._AmiBaker__recipe['base_ami'] == 'ami-deadbeef'
-
 
     def test_base_ami_overridden(self):
         fake_recipe = StringIO.StringIO(b'''
