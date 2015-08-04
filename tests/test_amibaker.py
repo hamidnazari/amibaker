@@ -2,6 +2,7 @@ import unittest
 
 import StringIO
 from argparse import Namespace
+from functools import partial
 
 from amibaker.ami_baker import AmiBaker
 
@@ -25,8 +26,9 @@ key_name: my_key
 associate_public_ip: no
 
         ''')
-        with self.assertRaises(ValueError):
-            a = AmiBaker(fake_recipe)
+
+        failing_instantiator = partial(AmiBaker, fake_recipe)
+        self.assertRaises(ValueError, failing_instantiator)
 
     def test_base_ami_in_recipie(self):
         fake_recipe = StringIO.StringIO(b'''
