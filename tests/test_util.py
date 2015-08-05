@@ -2,9 +2,7 @@ import time
 import datetime
 import unittest
 import StringIO
-
 from amibaker.util import EpochDateTime
-
 from amibaker.ami_baker import AmiBaker
 
 

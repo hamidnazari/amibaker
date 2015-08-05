@@ -1,18 +1,9 @@
-import unittest
-
+import pytest
 import StringIO
-from functools import partial
-
 from amibaker.ami_baker import AmiBaker
 
 
-class TestAmiBaker(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def test_import(self):
-        pass
-
+class TestAmiBaker():
     def test_complains_no_base_ami(self):
         fake_recipe = StringIO.StringIO(b'''
 awscli_args:
@@ -27,10 +18,10 @@ associate_public_ip: no
 
         ''')
 
-        failing_instantiator = partial(AmiBaker, fake_recipe)
-        self.assertRaises(ValueError, failing_instantiator)
+        with pytest.raises(ValueError):
+            AmiBaker(fake_recipe)
 
-    def test_base_ami_in_recipie(self):
+    def test_base_ami_in_recipe(self):
         fake_recipe = StringIO.StringIO(b'''
 awscli_args:
   profile: my_profile

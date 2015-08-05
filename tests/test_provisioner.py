@@ -1,13 +1,13 @@
-import unittest
 import contextlib
 from mock import Mock, patch
 from amibaker.provisioner import Provisioner
 
 
-class TestProvisioner(unittest.TestCase):
-    def setUp(self):
-        self.ec2 = Mock()
-        self.provisioner = Provisioner(self.ec2, quiet=True)
+class TestProvisioner():
+    @classmethod
+    def setup_class(cls):
+        cls.ec2 = Mock()
+        cls.provisioner = Provisioner(cls.ec2, quiet=True)
 
     def test_copy(self):
         self.copy(times=1)
@@ -39,9 +39,7 @@ class TestProvisioner(unittest.TestCase):
             ) as (put, sudo):
             self.provisioner._Provisioner__copy(copy)
 
-            self.assertEqual(put.call_count, times,
-                             "put() should have been called as many times "
-                             "there are files to be copied")
+            assert put.call_count == times
 
             calls = [put(source[i], target[i], mode=mode[i])
                      for i in reversed(xrange(0, times))]
