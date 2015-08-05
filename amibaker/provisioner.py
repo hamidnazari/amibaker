@@ -2,6 +2,7 @@ from fabric.api import env, settings, hide
 from fabric.operations import run, put, sudo
 from os import path
 
+
 class Provisioner:
     def __init__(self, ec2, **kwargs):
         self.__ec2 = ec2
@@ -30,13 +31,15 @@ class Provisioner:
         env.eagerly_disconnect = True
 
         # no need to check fingerprint
-        env.skip_bad_hosts = True
+        env.disable_known_hosts = True
 
+        # TODO: Make this configurable through recipe YAML
         # number of ssh attempts
-        env.connection_attempts = 6
+        env.connection_attempts = 10
 
+        # TODO: Make this configurable through recipe YAML
         # how many seconds until considered failed attempt
-        env.timeout = 15
+        env.timeout = 30
 
         env.colorize_errors = True
 
@@ -47,7 +50,7 @@ class Provisioner:
             self.__run(script)
 
     def __run(self, script):
-        run(script)
+        run(script, warn_only=True)
 
     def __copy(self, copy):
         for f in copy:
