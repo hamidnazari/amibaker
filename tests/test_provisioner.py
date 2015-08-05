@@ -34,7 +34,7 @@ class TestProvisioner(unittest.TestCase):
                          'mode': mode[i]})
 
         with contextlib.nested(
-                patch('amibaker.provisioner.put', return_value=True),
+                patch('amibaker.provisioner.put', return_value=True),  # NOQA
                 patch('amibaker.provisioner.sudo', return_value=True)
             ) as (put, sudo):
             self.provisioner._Provisioner__copy(copy)

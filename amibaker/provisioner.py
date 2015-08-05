@@ -2,6 +2,7 @@ from fabric.api import env, settings, hide
 from fabric.operations import run, put, sudo
 from os import path
 
+
 class Provisioner:
     def __init__(self, ec2, **kwargs):
         self.__ec2 = ec2
