@@ -12,4 +12,7 @@ class EpochDateTime(datetime.datetime):
         super(EpochDateTime, self).__init__(*args, **kwargs)
 
     def __str__(self):
-        return '{0:.0f}'.format((self - self.epoch_dt).total_seconds())
+        time_delta = self - self.epoch_dt
+        total_seconds = (time_delta.microseconds + (time_delta.seconds +
+                         time_delta.days * 24 * 3600) * 10**6) / 10**6
+        return '{0:.0f}'.format(total_seconds)
