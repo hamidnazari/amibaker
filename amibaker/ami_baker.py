@@ -1,8 +1,8 @@
 import yaml
-import time
 from jinja2 import Template
 from .ami_ec2 import AmiEc2
 from .provisioner import Provisioner
+from .util import EpochDateTime
 
 
 class AmiBaker:
@@ -36,7 +36,7 @@ class AmiBaker:
         else:
             self.__recipe['ec2_tags'] = dict(Name=self.__recipe['ami_tags']['Name'])
 
-        timestamp = int(time.time())
+        timestamp = EpochDateTime.now()
 
         render(self.__recipe['ec2_tags'], timestamp=timestamp)
         render(self.__recipe['ami_tags'], timestamp=timestamp)
