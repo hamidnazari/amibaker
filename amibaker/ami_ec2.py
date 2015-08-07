@@ -90,6 +90,10 @@ class AmiEc2:
         self.__awscli.ec2('wait', 'instance-running',
                           '--instance-ids', self.__instance['InstanceId'])
 
+    def wait_until_healthy(self):
+        self.__awscli.ec2('wait', 'instance-running',
+                          '--instance-ids', self.__instance['InstanceId'])
+
     def wait_until_terminated(self):
         self.__awscli.ec2('wait', 'instance-terminated',
                           '--instance-ids', self.__instance['InstanceId'])
