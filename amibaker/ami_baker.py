@@ -53,6 +53,7 @@ class AmiBaker:
         ec2 = AmiEc2(quiet=self.__quiet, recipe=self.__recipe)
         ec2.instantiate()
 
+        ec2.wait_until_healthy()
         provisioner = Provisioner(ec2, quiet=self.__quiet)
 
         provision_args = {}
