@@ -1,9 +1,9 @@
 import time
 import datetime
-import unittest
 import StringIO
 from amibaker.util import EpochDateTime
 from amibaker.ami_baker import AmiBaker
+
 
 def test_str_is_like_a_epoch_timestamp():
     mark = int(time.time())
@@ -12,9 +12,11 @@ def test_str_is_like_a_epoch_timestamp():
     assert result >= mark
     assert '.' not in result
 
+
 def test_strftime_still_works():
     assert datetime.datetime.now().strftime('%Y-%m-%d') == \
         EpochDateTime.now().strftime('%Y-%m-%d')
+
 
 def test_rendertags_timestamp_default():
     mark = int(time.time())
@@ -29,6 +31,7 @@ ami_tags:
     assert '.' not in result[1]
     assert int(result[1]) >= mark
     assert result[2] == 'LOL'
+
 
 def test_rendertags_timestamp_strftime():
     mark = datetime.datetime.now()

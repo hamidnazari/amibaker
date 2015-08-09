@@ -20,6 +20,7 @@ associate_public_ip: no
     with pytest.raises(ValueError):
         AmiBaker(fake_recipe)
 
+
 def test_base_ami_in_recipe():
     fake_recipe = StringIO.StringIO(b'''
 awscli_args:
@@ -35,6 +36,7 @@ associate_public_ip: no
     ''')
     a = AmiBaker(fake_recipe)
     assert a._AmiBaker__recipe['base_ami'] == 'ami-deadbeef'
+
 
 def test_base_ami_overridden():
     fake_recipe = StringIO.StringIO(b'''

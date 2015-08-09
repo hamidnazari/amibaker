@@ -1,4 +1,4 @@
-from mock import Mock, patch
+from mock import Mock
 import pytest
 from amibaker import provisioner
 
@@ -41,4 +41,3 @@ def test_many_copies(mock_provisioner, times):
              for i in reversed(xrange(0, times))]
 
     assert provisioner.put.has_calls(calls)
-
