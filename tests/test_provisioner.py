@@ -5,7 +5,7 @@ from amibaker import provisioner
 
 @pytest.fixture
 def mock_provisioner(monkeypatch):
-    monkeypatch.setattr(provisioner, 'put', lambda *args, **kwargs: True)
+    monkeypatch.setattr(provisioner, 'put', Mock())
     monkeypatch.setattr(provisioner, 'sudo', lambda *args, **kwargs: True)
 
     m_ec2 = Mock()
@@ -14,11 +14,11 @@ def mock_provisioner(monkeypatch):
 
 
 @pytest.mark.parametrize("times", [
-    # (0),
+    (0),
     (1),
-    # (4),
+    (4),
 ])
-def test_many_copys(mock_provisioner, times):
+def test_many_copies(mock_provisioner, times):
     copy = []
     source = []
     target = []
@@ -35,10 +35,10 @@ def test_many_copys(mock_provisioner, times):
 
     mock_provisioner._Provisioner__copy(copy)
 
-    assert put.call_count == times
+    assert provisioner.put.call_count == times
 
-    calls = [put(source[i], target[i], mode=mode[i])
+    calls = [provisioner.put(source[i], target[i], mode=mode[i])
              for i in reversed(xrange(0, times))]
 
-    put.has_calls(calls)
+    assert provisioner.put.has_calls(calls)
 
