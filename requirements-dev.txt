@@ -1,7 +1,7 @@
 flake8==2.4.1
-ipython==3.2.0
 tox==2.1.1
-nose2==0.5.0
-nose2-cov==1.0a4
 mock==1.0.1
+pytest==2.7.2
+pytest-cov==2.0.0
+ipdb==0.8.1
 -r requirements.txt

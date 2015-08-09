@@ -1,20 +1,10 @@
-import unittest
-
+import pytest
 import StringIO
-from functools import partial
-
 from amibaker.ami_baker import AmiBaker
 
 
-class TestAmiBaker(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def test_import(self):
-        pass
-
-    def test_complains_no_base_ami(self):
-        fake_recipe = StringIO.StringIO(b'''
+def test_complains_no_base_ami():
+    fake_recipe = StringIO.StringIO(b'''
 awscli_args:
   profile: my_profile
   region: ap-southeast-2 # TODO: optional, otherwise uses awscli profile region
@@ -25,13 +15,14 @@ subnet_id: subnet-deadbeef
 key_name: my_key
 associate_public_ip: no
 
-        ''')
+    ''')
 
-        failing_instantiator = partial(AmiBaker, fake_recipe)
-        self.assertRaises(ValueError, failing_instantiator)
+    with pytest.raises(ValueError):
+        AmiBaker(fake_recipe)
 
-    def test_base_ami_in_recipie(self):
-        fake_recipe = StringIO.StringIO(b'''
+
+def test_base_ami_in_recipe():
+    fake_recipe = StringIO.StringIO(b'''
 awscli_args:
   profile: my_profile
   region: ap-southeast-2 # TODO: optional, otherwise uses awscli profile region
@@ -42,12 +33,13 @@ subnet_id: subnet-deadbeef
 key_name: my_key
 associate_public_ip: no
 
-        ''')
-        a = AmiBaker(fake_recipe)
-        assert a._AmiBaker__recipe['base_ami'] == 'ami-deadbeef'
+    ''')
+    a = AmiBaker(fake_recipe)
+    assert a._AmiBaker__recipe['base_ami'] == 'ami-deadbeef'
 
-    def test_base_ami_overridden(self):
-        fake_recipe = StringIO.StringIO(b'''
+
+def test_base_ami_overridden():
+    fake_recipe = StringIO.StringIO(b'''
 awscli_args:
   profile: my_profile
   region: ap-southeast-2 # TODO: optional, otherwise uses awscli profile region
@@ -58,6 +50,6 @@ subnet_id: subnet-deadbeef
 key_name: my_key
 associate_public_ip: no
 
-        ''')
-        a = AmiBaker(fake_recipe, override_base_ami='ami-overridden')
-        assert a._AmiBaker__recipe['base_ami'] == 'ami-overridden'
+    ''')
+    a = AmiBaker(fake_recipe, override_base_ami='ami-overridden')
+    assert a._AmiBaker__recipe['base_ami'] == 'ami-overridden'

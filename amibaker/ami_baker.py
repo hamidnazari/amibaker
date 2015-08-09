@@ -34,7 +34,9 @@ class AmiBaker:
                 self.__recipe['ec2_tags']['Name'] = \
                     self.__recipe['ami_tags']['Name']
         else:
-            self.__recipe['ec2_tags'] = dict(Name=self.__recipe['ami_tags']['Name'])
+            self.__recipe['ec2_tags'] = dict(
+                Name=self.__recipe['ami_tags']['Name']
+            )
 
         timestamp = EpochDateTime.now()
 
@@ -46,7 +48,8 @@ class AmiBaker:
             self.__recipe['base_ami'] = override_base_ami
 
         if 'base_ami' not in self.__recipe:
-            raise ValueError('You must specify a base_ami on the command line or in the recipe')
+            raise ValueError('You must specify a base_ami on the command \
+            line or in the recipe')
         self._foo = self.__recipe
 
     def bake(self):

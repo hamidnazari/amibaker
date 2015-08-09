@@ -1,49 +1,43 @@
-import unittest
-import contextlib
-from mock import Mock, patch
-from amibaker.provisioner import Provisioner
+from mock import Mock
+import pytest
+from amibaker import provisioner
 
 
-class TestProvisioner(unittest.TestCase):
-    def setUp(self):
-        self.ec2 = Mock()
-        self.provisioner = Provisioner(self.ec2, quiet=True)
+@pytest.fixture
+def mock_provisioner(monkeypatch):
+    monkeypatch.setattr(provisioner, 'put', Mock())
+    monkeypatch.setattr(provisioner, 'sudo', lambda *args, **kwargs: True)
 
-    def test_copy(self):
-        self.copy(times=1)
+    m_ec2 = Mock()
+    m_provisioner = provisioner.Provisioner(m_ec2, quiet=True)
+    return m_provisioner
 
-    def test_no_copy(self):
-        self.copy(times=0)
 
-    def test_multiple_copies(self):
-        self.copy(times=4)
+@pytest.mark.parametrize("times", [
+    (0),
+    (1),
+    (4),
+])
+def test_many_copies(mock_provisioner, times):
+    copy = []
+    source = []
+    target = []
+    mode = []
 
-    def copy(self, times=1):
-        copy = []
-        source = []
-        target = []
-        mode = []
+    for i in xrange(0, times):
+        source.append("/path/to/source%d" % i)
+        target.append("/path/to/target%d" % i)
+        mode.append((i+1) * 222)  # 222, 444, 666
 
-        for i in xrange(0, times):
-            source.append("/path/to/source%d" % i)
-            target.append("/path/to/target%d" % i)
-            mode.append((i+1) * 222)  # 222, 444, 666
+        copy.append({'from': source[i],
+                     'to': target[i],
+                     'mode': mode[i]})
 
-            copy.append({'from': source[i],
-                         'to': target[i],
-                         'mode': mode[i]})
+    mock_provisioner._Provisioner__copy(copy)
 
-        with contextlib.nested(
-                patch('amibaker.provisioner.put', return_value=True),  # NOQA
-                patch('amibaker.provisioner.sudo', return_value=True)
-            ) as (put, sudo):
-            self.provisioner._Provisioner__copy(copy)
+    assert provisioner.put.call_count == times
 
-            self.assertEqual(put.call_count, times,
-                             "put() should have been called as many times "
-                             "there are files to be copied")
+    calls = [provisioner.put(source[i], target[i], mode=mode[i])
+             for i in reversed(xrange(0, times))]
 
-            calls = [put(source[i], target[i], mode=mode[i])
-                     for i in reversed(xrange(0, times))]
-
-            put.has_calls(calls)
+    assert provisioner.put.has_calls(calls)
