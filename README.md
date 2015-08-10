@@ -62,14 +62,14 @@ ami_permissions:
 
 tasks:
   - copy:
-    - source: /path/to/some_file
-      target: /path/to/destination_dir/
-    - source: /path/to/another_file
-      target: /path/to/destination_file
+    - src: /path/to/some_file
+      dest: /path/to/destination_dir/
+    - src: /path/to/another_file
+      dest: /path/to/destination_file
       mode: 0600
   - exec:
-    - source: /path/to/local/script
-      target: /path/to/remote/dir
+    - src: /path/to/local/script
+      dest: /path/to/remote/dir
       cwd: /path/to/another/remote/dir
   - exec:
     - cwd: /path/to//remote/dir
@@ -79,13 +79,12 @@ tasks:
   - exec:
     - source: /path/to/another/local/script
       cwd: /path/to/another/remote/dir
+
 ```
 
 ## Roadmap
 * Add tests
-* Support execution from one or more scripts
 * Replace AWSCLI with Boto3
-* Travis CI
 * No reboot option
 * Improve documentation
 * Generate keys if not provided

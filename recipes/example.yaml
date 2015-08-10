@@ -44,8 +44,8 @@ tasks:
       dest: /path/to/destination_file
       mode: 0600
   - exec:
-    - source: /path/to/local/script
-      target: /path/to/remote/dir
+    - src: /path/to/local/script
+      dest: /path/to/remote/dir
       cwd: /path/to/another/remote/dir
   - exec:
     - cwd: /path/to//remote/dir
