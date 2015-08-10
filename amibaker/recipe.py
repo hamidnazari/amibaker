@@ -47,8 +47,8 @@ class Recipe(OpenStruct):
             line or in the recipe')
 
         # There's only one behaviour, and it's not behavior!
-        if 'imaging_behavior' in self.__dict__ and
-        'imaging_behaviour' not in self.__dict__:
+        if 'imaging_behavior' in self.__dict__ and \
+           'imaging_behaviour' not in self.__dict__:
             self.imaging_behaviour = self.imaging_behavior
 
         if self.imaging_behaviour not in ('restart', 'stop', 'none'):
