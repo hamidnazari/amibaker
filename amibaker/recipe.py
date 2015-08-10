@@ -10,12 +10,14 @@ class Recipe(OpenStruct):
 
         OpenStruct.__init__(self, **recipe)
 
-        self.__override_recipe(override)
+        if override:
+            self.__override_recipe(override)
+
         self.__render_tags()
         self.__validate()
 
     def __override_recipe(self, override):
-        if override['base_ami']:
+        if override.get('base_ami'):
             self.base_ami = override['base_ami']
 
     def __render_tags(self):
@@ -34,8 +36,6 @@ class Recipe(OpenStruct):
 
         render(self.ec2_tags, timestamp=timestamp)
         render(self.ami_tags, timestamp=timestamp)
-
-        print self.ami_tags
 
     @staticmethod
     def __default_name():
