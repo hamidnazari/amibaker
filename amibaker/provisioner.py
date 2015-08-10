@@ -52,7 +52,7 @@ class Provisioner(object):
                 for job in jobs:
                     getattr(self, '_{0}'.format(operation))(**job)
 
-    def _exec(self, src=None, body=None, dest=None, cwd=None, args=None, use_sudo=True):
+    def _exec(self, src=None, body=None, dest=None, cwd=None, args=None):
         assert src or body, "Must specify one of src (file to copy & execute) or body (inline script)"
 
         if src:
@@ -89,7 +89,8 @@ class Provisioner(object):
         except Exception, e:
             saved_exception = e
         finally:
-            run('rm {0}'.format(dest), warn_only=True)
+            if dest:
+                run('rm {0}'.format(dest), warn_only=True)
 
         if saved_exception:
             raise saved_exception
