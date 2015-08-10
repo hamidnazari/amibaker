@@ -64,23 +64,11 @@ def test_exec_validates_input(mock_provisioner, src, body, args):
         mock_provisioner._exec(src=src, body=body, args=args)
 
 
-@pytest.mark.parametrize("src,body,args", [
-    (None, None, None),
-    ("some src", "some body", None),
-    (None, "some body", "some args"),
-])
-def test_exec_validates_input(mock_provisioner, src, body, args):
-    """
-    Test that _exec raises if invalid combination of input is given
-    """
-    with pytest.raises(Exception):
-        mock_provisioner._exec(src=src, body=body, args=args)
-
-
 def test_exec_inline_script(mock_provisioner):
     mock_provisioner._exec(body='whoami')
     expected_calls = [call('whoami')]
     assert provisioner.run.mock_calls == expected_calls
+
 
 def test_exec_inline_script_cwd(mock_provisioner):
     mock_provisioner._exec(body='whoami', cwd='/home/chris')
@@ -136,6 +124,7 @@ def test_exec_src_dest_cwd(monkeypatch, mock_provisioner):
     ]
     assert provisioner.put.mock_calls == expected_put_calls
     assert provisioner.run.mock_calls == expected_run_calls
+
 
 def test_exec_src_nodest(monkeypatch, mock_provisioner):
     """
