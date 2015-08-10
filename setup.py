@@ -4,10 +4,6 @@ from amibaker.version import VERSION
 with open('requirements.txt') as f:
     required = f.read().splitlines()
 
-with open('requirements-test.txt') as f:
-    required_test = [x for x in f.read().splitlines() if not x.startswith('-r')]
-    required_test.extend(required)
-
 setup(
     name='amibaker',
     version=VERSION,
