@@ -24,9 +24,10 @@ def test_rendertags_timestamp_default():
 base_ami: whatever
 ami_tags:
   Name: ROFL {{ timestamp }} LOL
+  test: ggerger
     ''')
     a = AmiBaker(fake_recipe)
-    result = a._AmiBaker__recipe['ami_tags']['Name'].split()
+    result = a._AmiBaker__recipe.ami_tags.Name.split()
     assert result[0] == 'ROFL'
     assert '.' not in result[1]
     assert int(result[1]) >= mark
@@ -39,9 +40,10 @@ def test_rendertags_timestamp_strftime():
 base_ami: whatever
 ami_tags:
   Name: ROFL {{ timestamp.strftime('%Y-%m-%d %H:%M:%S') }} LOL
+  test: ggerger
     ''')
     a = AmiBaker(fake_recipe)
-    result = a._AmiBaker__recipe['ami_tags']['Name'].split()
+    result = a._AmiBaker__recipe.ami_tags.Name.split()
     assert result[0] == 'ROFL'
     assert int(result[1].split('-')[0]) == mark.year
     assert int(result[1].split('-')[1]) == mark.month

@@ -43,6 +43,7 @@ setup(
         'awsclpy==0.3.5',
         'Fabric==1.10.2',
         'Jinja2==2.7.3',
+        'ostruct==0.3',
         'PyYAML==3.11'
     ],
     zip_safe=False)

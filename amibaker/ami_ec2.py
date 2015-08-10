@@ -6,26 +6,26 @@ class AmiEc2:
     def __init__(self, **kwrags):
         self.__quiet = kwrags.get('quiet', False)
         self.__awscli = AWSCLPy(quiet=self.__quiet,
-                                **kwrags['recipe']['awscli_args'])
+                                **kwrags['recipe'].awscli_args)
         self.__recipe = kwrags['recipe']
 
     def instantiate(self):
-        security_group = self.__recipe.get('security_groups')
+        security_group = self.__recipe.security_groups
         if not security_group:
             self.__create_security_group()
             security_group = self.security_group
 
-        key_name = self.__recipe.get('key_name')
+        key_name = self.__recipe.key_name
         if not key_name:
             self.__generate_key_pair()
             key_name = self.key_name
 
-        instance_profile = self.__recipe.get('iam_instance_profile')
-        iam_roles = self.__recipe.get('iam_roles')
+        instance_profile = self.__recipe.iam_instance_profile
+        iam_roles = self.__recipe.iam_roles
 
         if instance_profile:
-            instance_profile_arn = instance_profile.get('arn')
-            instance_profile_name = instance_profile.get('name')
+            instance_profile_arn = instance_profile.arn
+            instance_profile_name = instance_profile.name
         elif isinstance(iam_roles, list):
             instance_profile_arn, instance_profile_name = \
                 self.__create_iam_instance_profile(iam_roles)
@@ -52,23 +52,23 @@ class AmiEc2:
 
         associate_public_ip_address = \
             '--associate-public-ip-address' \
-            if self.__recipe['associate_public_ip'] \
+            if self.__recipe.associate_public_ip \
             else '--no-associate-public-ip-address'
 
         instance = self.__awscli.ec2(
             'run-instances',
-            '--image-id', self.__recipe['base_ami'],
+            '--image-id', self.__recipe.base_ami,
             '--key-name', key_name,
             '--security-group-ids', security_group,
-            '--instance-type', self.__recipe['instance_type'],
-            '--subnet-id', self.__recipe['subnet_id'],
+            '--instance-type', self.__recipe.instance_type,
+            '--subnet-id', self.__recipe.subnet_id,
             associate_public_ip_address,
             iam_instance_profile
             )
 
         self.__instance = instance['Instances'][0]
 
-        self.tag(self.__instance['InstanceId'], self.__recipe['ec2_tags'])
+        self.tag(self.__instance['InstanceId'], self.__recipe.ec2_tags)
 
         self.__describe_instance()
 
@@ -112,7 +112,7 @@ class AmiEc2:
                 return self.__instance['PrivateIpAddress']
 
     def get_username(self):
-        return self.__recipe.get('ssh_username')
+        return self.__recipe.ssh_username
 
     def tag(self, resource, tags):
         tags = ["Key=%s,Value=%s" % (key, value) for key, value in
@@ -126,10 +126,10 @@ class AmiEc2:
         self.__image = self.__awscli.ec2(
             'create-image',
             '--instance-id', self.__instance['InstanceId'],
-            '--name', self.__recipe['ami_tags']['Name'],
+            '--name', self.__recipe.ami_tags.Name,
             '--reboot')
 
-        ami_permissions = self.__recipe.get('ami_permissions')
+        ami_permissions = self.__recipe.ami_permissions
 
         if ami_permissions:
             self.__share_image(ami_permissions)
@@ -138,7 +138,7 @@ class AmiEc2:
             raise Exception('Image creation for instance %s failed.' %
                             self.__instance['InstanceId'])
 
-        self.tag(self.__image['ImageId'], self.__recipe['ami_tags'])
+        self.tag(self.__image['ImageId'], self.__recipe.ami_tags)
 
         return self.__image['ImageId']
 
@@ -164,7 +164,7 @@ class AmiEc2:
 
     def __get_vpc_id(self):
         subnet = self.__awscli.ec2('describe-subnets',
-                                   '--subnet-ids', self.__recipe['subnet_id'])
+                                   '--subnet-ids', self.__recipe.subnet_id)
 
         return subnet['Subnets'][0]['VpcId']
 
@@ -173,7 +173,7 @@ class AmiEc2:
 
         security_group = self.__awscli.ec2(
             'create-security-group',
-            '--group-name', self.__recipe['ec2_tags']['Name'],
+            '--group-name', self.__recipe.ec2_tags.Name,
             '--description', 'Allows temporary SSH access to the box.',
             '--vpc-id', vpc_id)
 

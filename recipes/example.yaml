@@ -37,7 +37,7 @@ ami_permissions:
   - 567890123456
 
 copy:
-  - from: /path/to/some_file:
+  - from: /path/to/some_file
     to: /path/to/destination_dir/
   - from: /path/to/another_file
     to: /path/to/destination_file

@@ -12,7 +12,7 @@ def main():
         'recipe',
         nargs='+',
         type=argparse.FileType('r'),
-        help='Recipe to bake image from.')
+        help='Recipe to bake an image from.')
 
     argparser.add_argument(
         '-q', '--quiet',

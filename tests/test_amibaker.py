@@ -35,7 +35,7 @@ associate_public_ip: no
 
     ''')
     a = AmiBaker(fake_recipe)
-    assert a._AmiBaker__recipe['base_ami'] == 'ami-deadbeef'
+    assert a._AmiBaker__recipe.base_ami == 'ami-deadbeef'
 
 
 def test_base_ami_overridden():
@@ -52,4 +52,4 @@ associate_public_ip: no
 
     ''')
     a = AmiBaker(fake_recipe, override_base_ami='ami-overridden')
-    assert a._AmiBaker__recipe['base_ami'] == 'ami-overridden'
+    assert a._AmiBaker__recipe.base_ami == 'ami-overridden'
