@@ -136,3 +136,38 @@ def test_exec_src_dest_cwd(monkeypatch, mock_provisioner):
     ]
     assert provisioner.put.mock_calls == expected_put_calls
     assert provisioner.run.mock_calls == expected_run_calls
+
+def test_exec_src_nodest(monkeypatch, mock_provisioner):
+    """
+    In this scenario _exec has to call mktemp on remote system to come up with a suitable temporary file to use
+    """
+    src = '/some/local/file'
+    args = 'foo --bar=True --baz'
+    dest = None
+
+    monkeypatch.setattr(os.path, 'isfile', lambda x: True)
+
+    def side_effect(x, warn_only=None):
+        if x == 'mktemp':
+            return '/tmp/whatever'
+
+        return True
+
+    monkeypatch.setattr(provisioner, 'run', Mock(side_effect=side_effect))
+
+    mock_provisioner._exec(
+        src=src,
+        dest=dest,
+        args=args
+    )
+
+    expected_run_calls = [
+        call('mktemp'.format(dest, args)),
+        call('{0} {1}'.format('/tmp/whatever', args)),
+        call('rm {0}'.format('/tmp/whatever'), warn_only=True),
+    ]
+    expected_put_calls = [
+        call(src, '/tmp/whatever', mode=0600, use_sudo=True)
+    ]
+    assert provisioner.put.mock_calls == expected_put_calls
+    assert provisioner.run.mock_calls == expected_run_calls
