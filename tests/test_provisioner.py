@@ -25,8 +25,6 @@ def test_copy(mock_provisioner, times):
     mode = []
     tasks = []
 
-
-
     for i in xrange(0, times):
         source.append("/path/to/source%d" % i)
         target.append("/path/to/target%d" % i)
