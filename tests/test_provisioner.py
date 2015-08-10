@@ -18,22 +18,29 @@ def mock_provisioner(monkeypatch):
     (1),
     (4),
 ])
-def test_many_copies(mock_provisioner, times):
+def test_copy(mock_provisioner, times):
     copy = []
     source = []
     target = []
     mode = []
+    tasks = []
+
+
 
     for i in xrange(0, times):
         source.append("/path/to/source%d" % i)
         target.append("/path/to/target%d" % i)
         mode.append((i+1) * 222)  # 222, 444, 666
 
-        copy.append({'from': source[i],
-                     'to': target[i],
+        copy.append({'src': source[i],
+                     'dest': target[i],
                      'mode': mode[i]})
 
-    mock_provisioner._Provisioner__copy(copy)
+    tasks = [
+        {'copy': copy}
+    ]
+
+    mock_provisioner.process_tasks(tasks)
 
     assert provisioner.put.call_count == times
 

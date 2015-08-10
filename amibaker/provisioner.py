@@ -3,7 +3,9 @@ from fabric.operations import run, put, sudo
 from os import path
 
 
-class Provisioner:
+class Provisioner(object):
+    PERMITTED_OPERATIONS = ['exec', 'copy']
+
     def __init__(self, ec2, **kwargs):
         self.__ec2 = ec2
         self.__quiet = kwargs.get('quiet', False)
@@ -42,27 +44,31 @@ class Provisioner:
         env.timeout = 30
 
         env.colorize_errors = True
+        self.process_tasks(tasks)
 
-        if isinstance(copy, list):
-            self.__copy(copy)
+    def process_tasks(self, tasks):
+        for task in tasks:
+            for operation, jobs in task.iteritems():
+                assert operation in self.PERMITTED_OPERATIONS
+                assert isinstance(jobs, list)  # TODO: support listifying attributes found at same level as operation
 
-        if script:
-            self.__run(script)
+                for job in jobs:
+                    getattr(self, '_{0}'.format(operation))(**job)
 
-    def __run(self, script):
-        run(script, warn_only=True)
 
-    def __copy(self, copy):
-        for f in copy:
-            opts = {
-                'use_sudo': True
-            }
+    def _exec(self, *args, **kwargs):
+        # run(script, warn_only=True)
+        print args
+        print kwargs
+        pass
 
-            to_dir = path.dirname(f['to'])
-            sudo("mkdir -p %s" % to_dir)
+    def _copy(self, src, dest, mode=0600):
+        opts = {'use_sudo': True}
 
-            mode = f.get('mode')
-            if mode:
-                opts['mode'] = mode
+        dest_dir = path.dirname(dest)
+        sudo("mkdir -p %s" % dest_dir)
 
-            put(f['from'], f['to'], **opts)
+        if mode:
+            opts['mode'] = mode
+
+        put(src, dest, **opts)
