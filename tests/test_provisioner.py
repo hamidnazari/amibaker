@@ -46,3 +46,16 @@ def test_copy(mock_provisioner, times):
              for i in reversed(xrange(0, times))]
 
     assert provisioner.put.has_calls(calls)
+
+
+@pytest.mark.parametrize("src,body,args", [
+    (None, None, None),
+    ("some src", "some body", None),
+    (None, "some body", "some args"),
+])
+def test_exec_validates_input(mock_provisioner, src, body, args):
+    """
+    Test that _exec raises if invalid combination of input is given
+    """
+    with pytest.raises(Exception):
+        mock_provisioner._exec(src=src, body=body, args=args)
