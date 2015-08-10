@@ -8,7 +8,7 @@ class Provisioner:
         self.__ec2 = ec2
         self.__quiet = kwargs.get('quiet', False)
 
-    def provision(self, copy=None, script=None):
+    def provision(self, tasks):
         if not (copy or script):
             return False
 

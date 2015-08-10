@@ -20,12 +20,7 @@ class AmiBaker:
         ec2.wait_until_healthy()
         provisioner = Provisioner(ec2, quiet=self.__quiet)
 
-        provision_args = {}
-
-        provision_args['copy'] = self.__recipe.copy
-        provision_args['script'] = self.__recipe.provisioning_script
-
-        provisioner.provision(**provision_args)
+        provisioner.provision(self.__recipe.tasks)
 
         image_id = ec2.create_image()
 

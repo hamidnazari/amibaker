@@ -24,6 +24,7 @@ AmiBaker templates are [YAML](http://yaml.org/) files.
 ```yaml
 awscli_args:
   profile: my_profile
+  region: ap-southeast-2 # TODO: optional, otherwise uses awscli profile region
 
 base_ami: ami-fd9cecc7
 instance_type: t2.micro
@@ -59,16 +60,25 @@ ami_permissions:
   - 345678901234
   - 567890123456
 
-copy:
-  - from: /path/to/some_file:
-    to: /path/to/destination_dir/
-  - from: /path/to/another_file
-    to: /path/to/destination_file
-    mode: 0600
-
-provisioning_script: |
- sudo yum update -y
- sudo yum install -y telnet
+tasks:
+  - copy:
+    - source: /path/to/some_file
+      target: /path/to/destination_dir/
+    - source: /path/to/another_file
+      target: /path/to/destination_file
+      mode: 0600
+  - exec:
+    - source: /path/to/local/script
+      target: /path/to/remote/dir
+      cwd: /path/to/another/remote/dir
+  - exec:
+    - cwd: /path/to//remote/dir
+      body: |
+       sudo yum update -y
+       sudo yum install -y telnet
+  - exec:
+    - source: /path/to/another/local/script
+      cwd: /path/to/another/remote/dir
 ```
 
 ## Roadmap
