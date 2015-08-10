@@ -1,5 +1,6 @@
 from mock import Mock, call
 import pytest
+import os
 from amibaker import provisioner
 
 
@@ -78,9 +79,60 @@ def test_exec_validates_input(mock_provisioner, src, body, args):
 
 def test_exec_inline_script(mock_provisioner):
     mock_provisioner._exec(body='whoami')
-    calls = [call('whoami')]
-    assert provisioner.run.mock_calls == calls
+    expected_calls = [call('whoami')]
+    assert provisioner.run.mock_calls == expected_calls
 
+def test_exec_inline_script_cwd(mock_provisioner):
     mock_provisioner._exec(body='whoami', cwd='/home/chris')
-    calls.append(call('cd /home/chris; whoami'))
-    assert provisioner.run.mock_calls == calls
+    expected_calls = [call('cd /home/chris; whoami')]
+    assert provisioner.run.mock_calls == expected_calls
+
+
+def test_exec_src_dest(monkeypatch, mock_provisioner):
+    src = '/some/local/file'
+    args = 'foo --bar=True --baz'
+    dest = '/some/remote/file'
+
+    monkeypatch.setattr(os.path, 'isfile', lambda x: True)
+
+    mock_provisioner._exec(
+        src=src,
+        dest=dest,
+        args=args
+    )
+
+    expected_run_calls = [
+        call('{0} {1}'.format(dest, args)),
+        call('rm {0}'.format(dest), warn_only=True),
+    ]
+    expected_put_calls = [
+        call(src, dest, mode=0600, use_sudo=True)
+    ]
+    assert provisioner.put.mock_calls == expected_put_calls
+    assert provisioner.run.mock_calls == expected_run_calls
+
+
+def test_exec_src_dest_cwd(monkeypatch, mock_provisioner):
+    src = '/some/local/file'
+    args = 'foo --bar=True --baz'
+    dest = '/some/remote/file'
+    cwd = '/some/other/remote/folder'
+
+    monkeypatch.setattr(os.path, 'isfile', lambda x: True)
+
+    mock_provisioner._exec(
+        src=src,
+        dest=dest,
+        cwd=cwd,
+        args=args
+    )
+
+    expected_run_calls = [
+        call('cd {0}; {1} {2}'.format(cwd, dest, args)),
+        call('rm {0}'.format(dest), warn_only=True),
+    ]
+    expected_put_calls = [
+        call(src, dest, mode=0600, use_sudo=True)
+    ]
+    assert provisioner.put.mock_calls == expected_put_calls
+    assert provisioner.run.mock_calls == expected_run_calls

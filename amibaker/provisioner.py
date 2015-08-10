@@ -65,7 +65,6 @@ class Provisioner(object):
             assert isinstance(args, str), "Arguments must be a string, not {0}".format(type(args))
 
         if src and not dest:
-            # TODO: come up with a temporary file!
             dest = run('mktemp')
 
         if src:
