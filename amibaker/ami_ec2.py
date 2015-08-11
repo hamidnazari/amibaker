@@ -97,6 +97,10 @@ class AmiEc2(object):
         self.__awscli.ec2('wait', 'instance-status-ok',
                           '--instance-ids', self.__instance['InstanceId'])
 
+    def wait_until_stopped(self):
+        self.__awscli.ec2('wait', 'instance-stopped',
+                          '--instance-ids', self.__instance['InstanceId'])
+
     def wait_until_terminated(self):
         self.__awscli.ec2('wait', 'instance-terminated',
                           '--instance-ids', self.__instance['InstanceId'])
@@ -104,6 +108,10 @@ class AmiEc2(object):
     def wait_until_image_available(self):
         self.__awscli.ec2('wait', 'image-available',
                           '--image-ids', self.__image['ImageId'])
+
+    def stop(self):
+        self.__awscli.ec2('stop-instances',
+                          '--instance-ids', self.__instance['InstanceId'])
 
     def get_hostname(self):
         if self.__instance.get('PublicDnsName'):
@@ -126,11 +134,18 @@ class AmiEc2(object):
                           '--tags', tags)
 
     def create_image(self):
+        if self.__recipe.imaging_behaviour == 'stop':
+            self.stop()
+            self.wait_until_stopped()
+            reboot = ''
+        elif self.__recipe.imaging_behaviour == 'restart':
+            reboot = '--reboot'
+
         self.__image = self.__awscli.ec2(
             'create-image',
             '--instance-id', self.__instance['InstanceId'],
             '--name', self.__recipe.ami_tags.Name,
-            '--reboot')
+            reboot)
 
         ami_permissions = self.__recipe.ami_permissions
 

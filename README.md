@@ -60,6 +60,8 @@ ami_permissions:
   - 345678901234
   - 567890123456
 
+imaging_behaviour: restart # restart by default, also accepts 'none' and 'stop'
+
 tasks:
   - copy:
     - src: /path/to/some_file
