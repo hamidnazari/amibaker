@@ -1,6 +1,9 @@
 from setuptools import setup
 from amibaker.version import VERSION
 
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
+
 setup(
     name='amibaker',
     version=VERSION,
@@ -39,11 +42,5 @@ setup(
             'amibaker = amibaker.main:main',
         ],
     },
-    install_requires=[
-        'awsclpy==0.3.5',
-        'Fabric==1.10.2',
-        'Jinja2==2.7.3',
-        'ostruct==0.3',
-        'PyYAML==3.11'
-    ],
+    install_requires=required,
     zip_safe=False)

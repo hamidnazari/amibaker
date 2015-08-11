@@ -5,6 +5,17 @@ from .version import VERSION
 from .ami_baker import AmiBaker
 
 
+def run_recipes(args, recipes):
+    for recipe in recipes:
+        baker = AmiBaker(recipe,
+                         quiet=args.quiet,
+                         keep_instance=args.keep_instance,
+                         override_base_ami=args.base_ami,
+                         instance_id=args.instance_id
+                         )
+        baker.bake()
+
+
 def main():
     argparser = argparse.ArgumentParser()
 
@@ -36,10 +47,11 @@ def main():
         help='Specify base_ami, supersedes any base_ami specified in recipe'
     )
 
+    argparser.add_argument(
+        '-I', '--instance-id',
+        action='store',
+        help='For testing recipes, id of an already running ec2 machine'
+    )
+
     args = argparser.parse_args()
-    for recipe in args.recipe:
-        baker = AmiBaker(recipe,
-                         quiet=args.quiet,
-                         keep_instance=args.keep_instance,
-                         override_base_ami=args.base_ami)
-        baker.bake()
+    run_recipes(args, args.recipe)
