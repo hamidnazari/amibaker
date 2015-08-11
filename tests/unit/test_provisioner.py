@@ -10,7 +10,7 @@ from ostruct import OpenStruct
 def mock_provisioner(monkeypatch):
     monkeypatch.setattr(provisioner, 'put', Mock())
     monkeypatch.setattr(provisioner, 'run', Mock())
-    monkeypatch.setattr(provisioner, 'sudo', lambda *args, **kwargs: True)
+    monkeypatch.setattr(provisioner, 'sudo', Mock())
 
     m_ec2 = Mock()
     m_provisioner = provisioner.Provisioner(m_ec2, quiet=True)
@@ -89,13 +89,17 @@ def test_run_src_dest(monkeypatch, mock_provisioner):
 
     expected_run_calls = [
         call('{0} {1}'.format(dest, args)),
-        call('rm {0}'.format(dest), warn_only=True),
     ]
     expected_put_calls = [
         call(src, dest, mode=0500, use_sudo=True)
     ]
+    expected_sudo_calls = [
+        call('mkdir -p {0}'.format('/some/remote')),
+        call('rm {0}'.format(dest), warn_only=True),
+    ]
     assert provisioner.put.mock_calls == expected_put_calls
     assert provisioner.run.mock_calls == expected_run_calls
+    assert provisioner.sudo.mock_calls == expected_sudo_calls
 
 
 def test_run_src_dest_cwd(monkeypatch, mock_provisioner):
@@ -115,13 +119,17 @@ def test_run_src_dest_cwd(monkeypatch, mock_provisioner):
 
     expected_run_calls = [
         call('cd {0}; {1} {2}'.format(cwd, dest, args)),
-        call('rm {0}'.format(dest), warn_only=True),
     ]
     expected_put_calls = [
         call(src, dest, mode=0500, use_sudo=True)
     ]
+    expected_sudo_calls = [
+        call('mkdir -p {0}'.format('/some/remote')),
+        call('rm {0}'.format(dest), warn_only=True),
+    ]
     assert provisioner.put.mock_calls == expected_put_calls
     assert provisioner.run.mock_calls == expected_run_calls
+    assert provisioner.sudo.mock_calls == expected_sudo_calls
 
 
 def test_run_src_nodest(monkeypatch, mock_provisioner):
@@ -130,7 +138,6 @@ def test_run_src_nodest(monkeypatch, mock_provisioner):
     """
     src = '/some/local/file'
     args = 'foo --bar=True --baz'
-    dest = None
 
     monkeypatch.setattr(os.path, 'isfile', lambda x: True)
 
@@ -144,20 +151,23 @@ def test_run_src_nodest(monkeypatch, mock_provisioner):
 
     mock_provisioner._run(
         src=src,
-        dest=dest,
         args=args
     )
 
     expected_run_calls = [
-        call('mktemp'.format(dest, args)),
+        call('mktemp'),
         call('{0} {1}'.format('/tmp/whatever', args)),
-        call('rm {0}'.format('/tmp/whatever'), warn_only=True),
     ]
     expected_put_calls = [
         call(src, '/tmp/whatever', mode=0500, use_sudo=True)
     ]
+    expected_sudo_calls = [
+        call('mkdir -p {0}'.format('/tmp')),
+        call('rm {0}'.format('/tmp/whatever'), warn_only=True),
+    ]
     assert provisioner.put.mock_calls == expected_put_calls
     assert provisioner.run.mock_calls == expected_run_calls
+    assert provisioner.sudo.mock_calls == expected_sudo_calls
 
 
 def test_process_tasks_single_inline(mock_provisioner):
@@ -186,13 +196,18 @@ def test_process_tasks_src_dest_cwd(monkeypatch, mock_provisioner):
 
     expected_run_calls = [
         call('cd {0}; {1} {2}'.format(cwd, dest, args)),
-        call('rm {0}'.format(dest), warn_only=True),
     ]
     expected_put_calls = [
         call(src, dest, mode=0500, use_sudo=True)
     ]
+
+    expected_sudo_calls = [
+        call('mkdir -p {0}'.format('/some/remote')),
+        call('rm {0}'.format(dest), warn_only=True),
+    ]
     assert provisioner.put.mock_calls == expected_put_calls
     assert provisioner.run.mock_calls == expected_run_calls
+    assert provisioner.sudo.mock_calls == expected_sudo_calls
 
 
 def test_process_tasks_src_only(monkeypatch, mock_provisioner):
@@ -219,11 +234,17 @@ def test_process_tasks_src_only(monkeypatch, mock_provisioner):
 
     expected_run_calls = [
         call('mktemp'),
-        call('{0}'.format('/tmp/whatever')),
-        call('rm {0}'.format('/tmp/whatever'), warn_only=True),
+        call('{0}'.format('/tmp/whatever'))
     ]
     expected_put_calls = [
         call(src, '/tmp/whatever', mode=0500, use_sudo=True)
     ]
+
+    expected_sudo_calls = [
+        call('mkdir -p {0}'.format('/tmp')),
+        call('rm {0}'.format('/tmp/whatever'), warn_only=True),
+    ]
+
     assert provisioner.put.mock_calls == expected_put_calls
     assert provisioner.run.mock_calls == expected_run_calls
+    assert provisioner.sudo.mock_calls == expected_sudo_calls
