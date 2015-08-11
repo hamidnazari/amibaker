@@ -5,8 +5,8 @@ from .version import VERSION
 from .ami_baker import AmiBaker
 
 
-def run_recipies(args, recipies):
-    for recipe in recipies:
+def run_recipes(args, recipes):
+    for recipe in recipes:
         baker = AmiBaker(recipe,
                          quiet=args.quiet,
                          keep_instance=args.keep_instance,
@@ -54,4 +54,4 @@ def main():
     )
 
     args = argparser.parse_args()
-    run_recipies(args, args.recipe)
+    run_recipes(args, args.recipe)
