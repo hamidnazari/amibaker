@@ -4,21 +4,21 @@ from os import path
 
 
 class Provisioner(object):
-    PERMITTED_OPERATIONS = ['exec', 'copy']
+    PERMITTED_OPERATIONS = ['run', 'copy']
 
     def __init__(self, ec2, **kwargs):
-        self.__ec2 = ec2
-        self.__quiet = kwargs.get('quiet', False)
+        self._ec2 = ec2
+        self._quiet = kwargs.get('quiet', False)
 
     def provision(self, tasks):
-        if self.__quiet:
+        if self._quiet:
             settings(hide('warnings', 'running', 'stdout', 'stderr'))
 
         # host to connect to
-        env.host_string = self.__ec2.get_hostname()
+        env.host_string = self._ec2.get_hostname()
 
         # ssh user to be used for this session
-        env.user = self.__ec2.get_username()
+        env.user = self._ec2.get_username()
 
         # no passwords available, use private key
         env.password = None
@@ -45,15 +45,21 @@ class Provisioner(object):
 
     def process_tasks(self, tasks):
         for task in tasks:
+            # from ipdb import set_trace; set_trace()
             for operation, jobs in task.iteritems():
                 assert operation in self.PERMITTED_OPERATIONS
                 assert isinstance(jobs, list)  # TODO: support listifying attributes found at same level as operation
 
                 for job in jobs:
-                    getattr(self, '_{0}'.format(operation))(**job)
+                    print(job)
+                    print(type(job))
+                    func_name = '_{0}'.format(operation)
+                    getattr(self, func_name)(**job.__dict__)
 
-    def _exec(self, src=None, body=None, dest=None, cwd=None, args=None):
-        assert src or body, "Must specify one of src (file to copy & execute) or body (inline script)"
+    def _run(self, src=None, body=None, dest=None, cwd=None, args=None):
+        assert (src or body), "You did not specify a src (file to copy & execute) or body (inline script), I got src={src}, body={body}".format(src=src, body=body)
+
+        assert not (src and body), "Must specify only one of src or body, I got src={src}, body={body}".format(src=src, body=body)
 
         if src:
             assert path.isfile(src), "Cannot find source script '{0}'".format(src)

@@ -7,6 +7,7 @@ class AmiBaker(object):
     def __init__(self, recipe, **kwargs):
         self.__quiet = kwargs.get('quiet', False)
         self.__keep_instance = kwargs.get('keep_instance', False)
+        self._specific_id = kwargs.get('specific_id', None)
 
         override = {}
         override['base_ami'] = kwargs.get('override_base_ami', None)
@@ -15,7 +16,11 @@ class AmiBaker(object):
 
     def bake(self):
         ec2 = AmiEc2(quiet=self.__quiet, recipe=self.__recipe)
-        ec2.instantiate()
+
+        if self._specific_id:
+            ec2.grab_existing_instance(self._specific_id)
+        else:
+            ec2.instantiate()
 
         ec2.wait_until_healthy()
         provisioner = Provisioner(ec2, quiet=self.__quiet)

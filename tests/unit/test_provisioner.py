@@ -3,6 +3,8 @@ import pytest
 import os
 from amibaker import provisioner
 
+from ostruct import OpenStruct
+
 
 @pytest.fixture
 def mock_provisioner(monkeypatch):
@@ -36,11 +38,8 @@ def test_copy(mock_provisioner, times):
                      'dest': target[i],
                      'mode': mode[i]})
 
-    tasks = [
-        {'copy': copy}
-    ]
-
-    mock_provisioner.process_tasks(tasks)
+    for task in copy:
+        mock_provisioner._copy(**task)
 
     assert provisioner.put.call_count == times
 
@@ -56,34 +55,34 @@ def test_copy(mock_provisioner, times):
     ("some src", "some body", None),
     (None, "some body", "some args"),
 ])
-def test_exec_validates_input(mock_provisioner, src, body, args):
+def test_run_validates_input(mock_provisioner, src, body, args):
     """
-    Test that _exec raises if invalid combination of input is given
+    Test that _run raises if invalid combination of input is given
     """
     with pytest.raises(Exception):
-        mock_provisioner._exec(src=src, body=body, args=args)
+        mock_provisioner._run(src=src, body=body, args=args)
 
 
-def test_exec_inline_script(mock_provisioner):
-    mock_provisioner._exec(body='whoami')
+def test_run_inline_script(mock_provisioner):
+    mock_provisioner._run(body='whoami')
     expected_calls = [call('whoami')]
     assert provisioner.run.mock_calls == expected_calls
 
 
-def test_exec_inline_script_cwd(mock_provisioner):
-    mock_provisioner._exec(body='whoami', cwd='/home/chris')
+def test_run_inline_script_cwd(mock_provisioner):
+    mock_provisioner._run(body='whoami', cwd='/home/chris')
     expected_calls = [call('cd /home/chris; whoami')]
     assert provisioner.run.mock_calls == expected_calls
 
 
-def test_exec_src_dest(monkeypatch, mock_provisioner):
+def test_run_src_dest(monkeypatch, mock_provisioner):
     src = '/some/local/file'
     args = 'foo --bar=True --baz'
     dest = '/some/remote/file'
 
     monkeypatch.setattr(os.path, 'isfile', lambda x: True)
 
-    mock_provisioner._exec(
+    mock_provisioner._run(
         src=src,
         dest=dest,
         args=args
@@ -100,7 +99,7 @@ def test_exec_src_dest(monkeypatch, mock_provisioner):
     assert provisioner.run.mock_calls == expected_run_calls
 
 
-def test_exec_src_dest_cwd(monkeypatch, mock_provisioner):
+def test_run_src_dest_cwd(monkeypatch, mock_provisioner):
     src = '/some/local/file'
     args = 'foo --bar=True --baz'
     dest = '/some/remote/file'
@@ -108,7 +107,7 @@ def test_exec_src_dest_cwd(monkeypatch, mock_provisioner):
 
     monkeypatch.setattr(os.path, 'isfile', lambda x: True)
 
-    mock_provisioner._exec(
+    mock_provisioner._run(
         src=src,
         dest=dest,
         cwd=cwd,
@@ -126,9 +125,9 @@ def test_exec_src_dest_cwd(monkeypatch, mock_provisioner):
     assert provisioner.run.mock_calls == expected_run_calls
 
 
-def test_exec_src_nodest(monkeypatch, mock_provisioner):
+def test_run_src_nodest(monkeypatch, mock_provisioner):
     """
-    In this scenario _exec has to call mktemp on remote system to come up with a suitable temporary file to use
+    In this scenario _run has to call mktemp on remote system to come up with a suitable temporary file to use
     """
     src = '/some/local/file'
     args = 'foo --bar=True --baz'
@@ -144,7 +143,7 @@ def test_exec_src_nodest(monkeypatch, mock_provisioner):
 
     monkeypatch.setattr(provisioner, 'run', Mock(side_effect=side_effect))
 
-    mock_provisioner._exec(
+    mock_provisioner._run(
         src=src,
         dest=dest,
         args=args
@@ -163,8 +162,9 @@ def test_exec_src_nodest(monkeypatch, mock_provisioner):
 
 
 def test_process_tasks_single_inline(mock_provisioner):
+    return
     tasks =[
-        { 'exec': [
+        { 'run': [
                 { 'body': 'whoami'}
             ]
         }
@@ -172,7 +172,6 @@ def test_process_tasks_single_inline(mock_provisioner):
     mock_provisioner.process_tasks(tasks=tasks)
     expected_calls = [call('whoami')]
     assert provisioner.run.mock_calls == expected_calls
-
 
 def test_process_tasks_src_dest_cwd(monkeypatch, mock_provisioner):
     src = '/some/local/file'
@@ -182,19 +181,11 @@ def test_process_tasks_src_dest_cwd(monkeypatch, mock_provisioner):
 
     monkeypatch.setattr(os.path, 'isfile', lambda x: True)
 
-    tasks =[
-        { 'exec': [
-                {
-                    'src': src,
-                    'args': args,
-                    'dest': dest,
-                    'cwd': cwd
-                }
-            ]
-        }
-    ]
+    job1 = OpenStruct(src=src, args=args, dest=dest, cwd=cwd)
+    task1 = OpenStruct(run=[job1.__dict__])
+    list_of_tasks = [task1]
 
-    mock_provisioner.process_tasks(tasks=tasks)
+    mock_provisioner.process_tasks(list_of_tasks)
 
     expected_run_calls = [
         call('cd {0}; {1} {2}'.format(cwd, dest, args)),
@@ -209,7 +200,7 @@ def test_process_tasks_src_dest_cwd(monkeypatch, mock_provisioner):
 
 def test_process_tasks_src_only(monkeypatch, mock_provisioner):
     """
-    In this scenario _exec has to call mktemp on remote system to come up with a suitable temporary file to use
+    In this scenario _run has to call mktemp on remote system to come up with a suitable temporary file to use
     """
     src = '/some/local/file'
 
@@ -223,16 +214,11 @@ def test_process_tasks_src_only(monkeypatch, mock_provisioner):
 
     monkeypatch.setattr(provisioner, 'run', Mock(side_effect=side_effect))
 
-    tasks =[
-        { 'exec': [
-                {
-                    'src': src,
-                }
-            ]
-        }
-    ]
+    job1 = OpenStruct(src=src)
+    task1 = OpenStruct(run=[job1.__dict__])
+    list_of_tasks = [task1]
 
-    mock_provisioner.process_tasks(tasks=tasks)
+    mock_provisioner.process_tasks(list_of_tasks)
 
     expected_run_calls = [
         call('mktemp'),

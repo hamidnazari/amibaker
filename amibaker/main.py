@@ -9,7 +9,9 @@ def run_recipies(args, recipies):
         baker = AmiBaker(recipe,
                          quiet=args.quiet,
                          keep_instance=args.keep_instance,
-                         override_base_ami=args.base_ami)
+                         override_base_ami=args.base_ami,
+                         specific_id=args.specific_id
+                         )
         baker.bake()
 
 
@@ -42,6 +44,12 @@ def main():
         '-b', '--base-ami',
         action='store',
         help='Specify base_ami, supersedes any base_ami specified in recipe'
+    )
+
+    argparser.add_argument(
+        '-u', '--specific_id',
+        action='store',
+        help='For testing recipes, id of an already running ec2 machine'
     )
 
     args = argparser.parse_args()
