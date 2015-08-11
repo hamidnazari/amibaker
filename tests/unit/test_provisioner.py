@@ -92,7 +92,7 @@ def test_run_src_dest(monkeypatch, mock_provisioner):
         call('rm {0}'.format(dest), warn_only=True),
     ]
     expected_put_calls = [
-        call(src, dest, mode=0600, use_sudo=True)
+        call(src, dest, mode=0500, use_sudo=True)
     ]
     assert provisioner.put.mock_calls == expected_put_calls
     assert provisioner.run.mock_calls == expected_run_calls
@@ -118,7 +118,7 @@ def test_run_src_dest_cwd(monkeypatch, mock_provisioner):
         call('rm {0}'.format(dest), warn_only=True),
     ]
     expected_put_calls = [
-        call(src, dest, mode=0600, use_sudo=True)
+        call(src, dest, mode=0500, use_sudo=True)
     ]
     assert provisioner.put.mock_calls == expected_put_calls
     assert provisioner.run.mock_calls == expected_run_calls
@@ -154,7 +154,7 @@ def test_run_src_nodest(monkeypatch, mock_provisioner):
         call('rm {0}'.format('/tmp/whatever'), warn_only=True),
     ]
     expected_put_calls = [
-        call(src, '/tmp/whatever', mode=0600, use_sudo=True)
+        call(src, '/tmp/whatever', mode=0500, use_sudo=True)
     ]
     assert provisioner.put.mock_calls == expected_put_calls
     assert provisioner.run.mock_calls == expected_run_calls
@@ -189,7 +189,7 @@ def test_process_tasks_src_dest_cwd(monkeypatch, mock_provisioner):
         call('rm {0}'.format(dest), warn_only=True),
     ]
     expected_put_calls = [
-        call(src, dest, mode=0600, use_sudo=True)
+        call(src, dest, mode=0500, use_sudo=True)
     ]
     assert provisioner.put.mock_calls == expected_put_calls
     assert provisioner.run.mock_calls == expected_run_calls
@@ -223,7 +223,7 @@ def test_process_tasks_src_only(monkeypatch, mock_provisioner):
         call('rm {0}'.format('/tmp/whatever'), warn_only=True),
     ]
     expected_put_calls = [
-        call(src, '/tmp/whatever', mode=0600, use_sudo=True)
+        call(src, '/tmp/whatever', mode=0500, use_sudo=True)
     ]
     assert provisioner.put.mock_calls == expected_put_calls
     assert provisioner.run.mock_calls == expected_run_calls

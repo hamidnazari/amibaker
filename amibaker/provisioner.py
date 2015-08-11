@@ -45,14 +45,11 @@ class Provisioner(object):
 
     def process_tasks(self, tasks):
         for task in tasks:
-            # from ipdb import set_trace; set_trace()
             for operation, jobs in task.iteritems():
                 assert operation in self.PERMITTED_OPERATIONS
                 assert isinstance(jobs, list)  # TODO: support listifying attributes found at same level as operation
 
                 for job in jobs:
-                    print(job)
-                    print(type(job))
                     func_name = '_{0}'.format(operation)
                     getattr(self, func_name)(**job.__dict__)
 
@@ -75,7 +72,7 @@ class Provisioner(object):
             dest = run('mktemp')
 
         if src:
-            self._copy(src=src, dest=dest, mode=0600)
+            self._copy(src=src, dest=dest, mode=0500)
 
         if dest:
             run_cmd = dest
