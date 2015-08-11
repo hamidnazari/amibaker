@@ -5,11 +5,9 @@ from awsclpy import AWSCLPy
 class AmiEc2(object):
     def __init__(self, **kwrags):
         self.__quiet = kwrags.get('quiet', False)
-        print(kwrags)
-        print(kwrags['recipe'].awscli_args)
-        self.__awscli = AWSCLPy(quiet=self.__quiet,
-                                **kwrags['recipe'].awscli_args)
         self.__recipe = kwrags['recipe']
+        self.__awscli = AWSCLPy(quiet=self.__quiet,
+                                **self.__recipe.awscli_args.__dict__)
 
     def instantiate(self):
         security_group = self.__recipe.security_groups
