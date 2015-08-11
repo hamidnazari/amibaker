@@ -93,7 +93,7 @@ class Provisioner(object):
             saved_exception = e
         finally:
             if dest:
-                run('rm {0}'.format(dest), warn_only=True)
+                sudo('rm {0}'.format(dest), warn_only=True)
 
         if saved_exception:
             raise saved_exception
