@@ -4,6 +4,7 @@ import argparse
 from .version import VERSION
 from .ami_baker import AmiBaker
 
+
 def run_recipies(args, recipies):
     for recipe in recipies:
         baker = AmiBaker(recipe,
@@ -54,4 +55,3 @@ def main():
 
     args = argparser.parse_args()
     run_recipies(args, args.recipe)
-

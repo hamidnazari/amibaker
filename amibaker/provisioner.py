@@ -57,7 +57,8 @@ class Provisioner(object):
                     getattr(self, func_name)(**job.__dict__)
 
     def _run(self, src=None, body=None, dest=None, cwd=None, args=None):
-        assert (src or body), "You did not specify a src (file to copy & execute) or body (inline script), I got src={src}, body={body}".format(src=src, body=body)
+        assert (src or body),\
+            "You did not specify a src (file to copy & execute) or body (inline script), I got src={src}, body={body}".format(src=src, body=body)
 
         assert not (src and body), "Must specify only one of src or body, I got src={src}, body={body}".format(src=src, body=body)
 

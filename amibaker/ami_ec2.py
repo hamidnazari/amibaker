@@ -74,10 +74,8 @@ class AmiEc2(object):
 
         self.__describe_instance()
 
-
     def grab_existing_instance(self, ec2_id):
         self.__describe_instance(ec2_id)
-
 
     def terminate(self):
         self.__awscli.ec2('terminate-instances',
@@ -171,12 +169,9 @@ class AmiEc2(object):
                                          '--instance-ids',
                                          self.__instance['InstanceId'])
 
-
-
         self.__instance = instance['Reservations'][0]['Instances'][0]
 
     def __get_vpc_id(self):
-        from ipdb import set_trace; set_trace()
         subnet = self.__awscli.ec2('describe-subnets',
                                    '--subnet-ids', self.__recipe.subnet_id)
 

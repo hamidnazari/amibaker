@@ -27,7 +27,6 @@ def test_copy(mock_provisioner, times):
     source = []
     target = []
     mode = []
-    tasks = []
 
     for i in xrange(0, times):
         source.append("/path/to/source%d" % i)
@@ -162,16 +161,14 @@ def test_run_src_nodest(monkeypatch, mock_provisioner):
 
 
 def test_process_tasks_single_inline(mock_provisioner):
-    return
-    tasks =[
-        { 'run': [
-                { 'body': 'whoami'}
-            ]
-        }
-    ]
-    mock_provisioner.process_tasks(tasks=tasks)
+    job1 = OpenStruct(body='whoami')
+    task1 = OpenStruct(run=[job1.__dict__])
+    list_of_tasks = [task1]
+
+    mock_provisioner.process_tasks(list_of_tasks)
     expected_calls = [call('whoami')]
     assert provisioner.run.mock_calls == expected_calls
+
 
 def test_process_tasks_src_dest_cwd(monkeypatch, mock_provisioner):
     src = '/some/local/file'
