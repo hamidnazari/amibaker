@@ -160,3 +160,87 @@ def test_exec_src_nodest(monkeypatch, mock_provisioner):
     ]
     assert provisioner.put.mock_calls == expected_put_calls
     assert provisioner.run.mock_calls == expected_run_calls
+
+
+def test_process_tasks_single_inline(mock_provisioner):
+    tasks =[
+        { 'exec': [
+                { 'body': 'whoami'}
+            ]
+        }
+    ]
+    mock_provisioner.process_tasks(tasks=tasks)
+    expected_calls = [call('whoami')]
+    assert provisioner.run.mock_calls == expected_calls
+
+
+def test_process_tasks_src_dest_cwd(monkeypatch, mock_provisioner):
+    src = '/some/local/file'
+    args = 'foo --bar=True --baz'
+    dest = '/some/remote/file'
+    cwd = '/some/other/remote/folder'
+
+    monkeypatch.setattr(os.path, 'isfile', lambda x: True)
+
+    tasks =[
+        { 'exec': [
+                {
+                    'src': src,
+                    'args': args,
+                    'dest': dest,
+                    'cwd': cwd
+                }
+            ]
+        }
+    ]
+
+    mock_provisioner.process_tasks(tasks=tasks)
+
+    expected_run_calls = [
+        call('cd {0}; {1} {2}'.format(cwd, dest, args)),
+        call('rm {0}'.format(dest), warn_only=True),
+    ]
+    expected_put_calls = [
+        call(src, dest, mode=0600, use_sudo=True)
+    ]
+    assert provisioner.put.mock_calls == expected_put_calls
+    assert provisioner.run.mock_calls == expected_run_calls
+
+
+def test_process_tasks_src_only(monkeypatch, mock_provisioner):
+    """
+    In this scenario _exec has to call mktemp on remote system to come up with a suitable temporary file to use
+    """
+    src = '/some/local/file'
+
+    monkeypatch.setattr(os.path, 'isfile', lambda x: True)
+
+    def side_effect(x, warn_only=None):
+        if x == 'mktemp':
+            return '/tmp/whatever'
+
+        return True
+
+    monkeypatch.setattr(provisioner, 'run', Mock(side_effect=side_effect))
+
+    tasks =[
+        { 'exec': [
+                {
+                    'src': src,
+                }
+            ]
+        }
+    ]
+
+    mock_provisioner.process_tasks(tasks=tasks)
+
+    expected_run_calls = [
+        call('mktemp'),
+        call('{0}'.format('/tmp/whatever')),
+        call('rm {0}'.format('/tmp/whatever'), warn_only=True),
+    ]
+    expected_put_calls = [
+        call(src, '/tmp/whatever', mode=0600, use_sudo=True)
+    ]
+    assert provisioner.put.mock_calls == expected_put_calls
+    assert provisioner.run.mock_calls == expected_run_calls
