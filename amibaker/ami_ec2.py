@@ -2,7 +2,7 @@ import json
 from awsclpy import AWSCLPy
 
 
-class AmiEc2:
+class AmiEc2(object):
     def __init__(self, **kwrags):
         self.__quiet = kwrags.get('quiet', False)
         self.__awscli = AWSCLPy(quiet=self.__quiet,

@@ -3,7 +3,7 @@ from .provisioner import Provisioner
 from .recipe import Recipe
 
 
-class AmiBaker:
+class AmiBaker(object):
     def __init__(self, recipe, **kwargs):
         self.__quiet = kwargs.get('quiet', False)
         self.__keep_instance = kwargs.get('keep_instance', False)

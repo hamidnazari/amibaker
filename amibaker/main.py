@@ -4,6 +4,14 @@ import argparse
 from .version import VERSION
 from .ami_baker import AmiBaker
 
+def run_recipies(args, recipies):
+    for recipe in recipies:
+        baker = AmiBaker(recipe,
+                         quiet=args.quiet,
+                         keep_instance=args.keep_instance,
+                         override_base_ami=args.base_ami)
+        baker.bake()
+
 
 def main():
     argparser = argparse.ArgumentParser()
@@ -37,9 +45,5 @@ def main():
     )
 
     args = argparser.parse_args()
-    for recipe in args.recipe:
-        baker = AmiBaker(recipe,
-                         quiet=args.quiet,
-                         keep_instance=args.keep_instance,
-                         override_base_ami=args.base_ami)
-        baker.bake()
+    run_recipies(args, args.recipe)
+
