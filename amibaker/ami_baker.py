@@ -3,10 +3,11 @@ from .provisioner import Provisioner
 from .recipe import Recipe
 
 
-class AmiBaker:
+class AmiBaker(object):
     def __init__(self, recipe, **kwargs):
         self.__quiet = kwargs.get('quiet', False)
         self.__keep_instance = kwargs.get('keep_instance', False)
+        self._instance_id = kwargs.get('instance_id', None)
 
         override = {}
         override['base_ami'] = kwargs.get('override_base_ami', None)
@@ -15,17 +16,16 @@ class AmiBaker:
 
     def bake(self):
         ec2 = AmiEc2(quiet=self.__quiet, recipe=self.__recipe)
-        ec2.instantiate()
+
+        if self._instance_id:
+            ec2.get_instance(self._instance_id)
+        else:
+            ec2.instantiate()
 
         ec2.wait_until_healthy()
         provisioner = Provisioner(ec2, quiet=self.__quiet)
 
-        provision_args = {}
-
-        provision_args['copy'] = self.__recipe.copy
-        provision_args['script'] = self.__recipe.provisioning_script
-
-        provisioner.provision(**provision_args)
+        provisioner.provision(self.__recipe.tasks)
 
         image_id = ec2.create_image()
 

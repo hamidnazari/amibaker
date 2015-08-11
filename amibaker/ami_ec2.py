@@ -2,7 +2,7 @@ import json
 from awsclpy import AWSCLPy
 
 
-class AmiEc2:
+class AmiEc2(object):
     def __init__(self, **kwrags):
         self.__quiet = kwrags.get('quiet', False)
         self.__recipe = kwrags['recipe']
@@ -71,6 +71,9 @@ class AmiEc2:
         self.tag(self.__instance['InstanceId'], self.__recipe.ec2_tags)
 
         self.__describe_instance()
+
+    def get_instance(self, ec2_id):
+        self.__describe_instance(ec2_id)
 
     def terminate(self):
         self.__awscli.ec2('terminate-instances',
@@ -168,12 +171,16 @@ class AmiEc2:
                           '--image-id', self.__image['ImageId'],
                           '--launch-permission', json.dumps(permissions))
 
-    def __describe_instance(self):
-        self.wait_until_running()
-
-        instance = self.__awscli.ec2('describe-instances',
-                                     '--instance-ids',
-                                     self.__instance['InstanceId'])
+    def __describe_instance(self, instance_id=None):
+        if instance_id:
+            instance = self.__awscli.ec2('describe-instances',
+                                         '--instance-ids',
+                                         instance_id)
+        else:
+            self.wait_until_running()
+            instance = self.__awscli.ec2('describe-instances',
+                                         '--instance-ids',
+                                         self.__instance['InstanceId'])
 
         self.__instance = instance['Reservations'][0]['Instances'][0]
 

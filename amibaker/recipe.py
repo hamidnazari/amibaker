@@ -17,6 +17,7 @@ class Recipe(OpenStruct):
         self.__validate()
 
     def __override_recipe(self, override):
+        # TODO: Merge dictionaries instead of this
         if override.get('base_ami'):
             self.base_ami = override['base_ami']
 

@@ -3,23 +3,22 @@ from fabric.operations import run, put, sudo
 from os import path
 
 
-class Provisioner:
+class Provisioner(object):
+    PERMITTED_OPERATIONS = ['run', 'copy']
+
     def __init__(self, ec2, **kwargs):
-        self.__ec2 = ec2
-        self.__quiet = kwargs.get('quiet', False)
+        self._ec2 = ec2
+        self._quiet = kwargs.get('quiet', False)
 
-    def provision(self, copy=None, script=None):
-        if not (copy or script):
-            return False
-
-        if self.__quiet:
+    def provision(self, tasks):
+        if self._quiet:
             settings(hide('warnings', 'running', 'stdout', 'stderr'))
 
         # host to connect to
-        env.host_string = self.__ec2.get_hostname()
+        env.host_string = self._ec2.get_hostname()
 
         # ssh user to be used for this session
-        env.user = self.__ec2.get_username()
+        env.user = self._ec2.get_username()
 
         # no passwords available, use private key
         env.password = None
@@ -42,27 +41,70 @@ class Provisioner:
         env.timeout = 30
 
         env.colorize_errors = True
+        self.process_tasks(tasks)
 
-        if isinstance(copy, list):
-            self.__copy(copy)
+    def process_tasks(self, tasks):
+        for task in tasks:
+            for operation, jobs in task.iteritems():
+                assert operation in self.PERMITTED_OPERATIONS
+                assert isinstance(jobs, list)  # TODO: support listifying attributes found at same level as operation
 
-        if script:
-            self.__run(script)
+                for job in jobs:
+                    func_name = '_{0}'.format(operation)
+                    getattr(self, func_name)(**job.__dict__)
 
-    def __run(self, script):
-        run(script, warn_only=True)
+    def _run(self, src=None, body=None, dest=None, cwd=None, args=None):
+        assert (src or body),\
+            "You did not specify a src (file to copy & execute) or body (inline script), I got src={src}, body={body}".format(src=src, body=body)
 
-    def __copy(self, copy):
-        for f in copy:
-            opts = {
-                'use_sudo': True
-            }
+        assert not (src and body), "Must specify only one of src or body, I got src={src}, body={body}".format(src=src, body=body)
 
-            to_dir = path.dirname(f['to'])
-            sudo("mkdir -p %s" % to_dir)
+        if src:
+            assert path.isfile(src), "Cannot find source script '{0}'".format(src)
 
-            mode = f.get('mode')
-            if mode:
-                opts['mode'] = mode
+        if body:
+            assert not args, "Cannot use arguments with embeded script, remove body and use src parameter instead."
 
-            put(f['from'], f['to'], **opts)
+        if args:
+            assert isinstance(args, str), "Arguments must be a string, not {0}".format(type(args))
+
+        if src and not dest:
+            dest = run('mktemp')
+
+        if src:
+            self._copy(src=src, dest=dest, mode=0500)
+
+        if dest:
+            run_cmd = dest
+
+            if args:
+                run_cmd = '{0} {1}'.format(run_cmd, args)
+        else:
+            run_cmd = body
+
+        if cwd:
+            run_cmd = 'cd {0}; {1}'.format(cwd, run_cmd)
+
+        saved_exception = None
+
+        try:
+            run(run_cmd)
+        except Exception, e:
+            saved_exception = e
+        finally:
+            if dest:
+                sudo('rm {0}'.format(dest), warn_only=True)
+
+        if saved_exception:
+            raise saved_exception
+
+    def _copy(self, src, dest, mode=0600):
+        opts = {'use_sudo': True}
+
+        dest_dir = path.dirname(dest)
+        sudo("mkdir -p %s" % dest_dir)
+
+        if mode:
+            opts['mode'] = mode
+
+        put(src, dest, **opts)

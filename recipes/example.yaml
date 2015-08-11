@@ -38,13 +38,22 @@ ami_permissions:
 
 imaging_behaviour: restart # restart by default, also accepts 'none' and 'stop'
 
-copy:
-  - from: /path/to/some_file
-    to: /path/to/destination_dir/
-  - from: /path/to/another_file
-    to: /path/to/destination_file
-    mode: 0600
-
-provisioning_script: |
- sudo yum update -y
- sudo yum install -y telnet
+tasks:
+  - copy:
+    - src: /path/to/some_file
+      dest: /path/to/destination_dir/
+    - src: /path/to/another_file
+      dest: /path/to/destination_file
+      mode: 0600
+  - run:
+    - src: /path/to/local/script
+      dest: /path/to/remote/dir
+      cwd: /path/to/another/remote/dir
+  - run:
+    - cwd: /path/to//remote/dir
+      body: |
+       sudo yum update -y
+       sudo yum install -y telnet
+  - run:
+    - source: /path/to/another/local/script
+      cwd: /path/to/another/remote/dir
