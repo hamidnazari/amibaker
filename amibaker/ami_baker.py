@@ -18,7 +18,7 @@ class AmiBaker(object):
         ec2 = AmiEc2(quiet=self.__quiet, recipe=self.__recipe)
 
         if self._instance_id:
-            ec2.grab_existing_instance(self._instance_id)
+            ec2.get_instance(self._instance_id)
         else:
             ec2.instantiate()
 

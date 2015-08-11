@@ -72,7 +72,7 @@ class AmiEc2(object):
 
         self.__describe_instance()
 
-    def grab_existing_instance(self, ec2_id):
+    def get_instance(self, ec2_id):
         self.__describe_instance(ec2_id)
 
     def terminate(self):
