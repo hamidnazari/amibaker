@@ -67,25 +67,24 @@ tasks:
     - src: /path/to/another_file
       dest: /path/to/destination_file
       mode: 0600
-  - exec:
+  - run:
     - src: /path/to/local/script
       dest: /path/to/remote/dir
       cwd: /path/to/another/remote/dir
-  - exec:
+  - run:
     - cwd: /path/to//remote/dir
       body: |
        sudo yum update -y
        sudo yum install -y telnet
-  - exec:
+  - run:
     - source: /path/to/another/local/script
       cwd: /path/to/another/remote/dir
-
 ```
 
 ## Roadmap
-* Add tests
+* Add more and more tests
 * Replace AWSCLI with Boto3
-* No reboot option
 * Improve documentation
 * Generate keys if not provided
 * Eliminate dependency to Fabric and use Paramiko instead
+* CLI argument to pass identity files
