@@ -11,7 +11,7 @@ def run_recipies(args, recipies):
                          quiet=args.quiet,
                          keep_instance=args.keep_instance,
                          override_base_ami=args.base_ami,
-                         specific_id=args.specific_id
+                         instance_id=args.instance_id
                          )
         baker.bake()
 
@@ -48,7 +48,7 @@ def main():
     )
 
     argparser.add_argument(
-        '-u', '--specific_id',
+        '-I', '--instance-id',
         action='store',
         help='For testing recipes, id of an already running ec2 machine'
     )

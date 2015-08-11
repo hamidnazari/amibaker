@@ -156,11 +156,11 @@ class AmiEc2(object):
                           '--image-id', self.__image['ImageId'],
                           '--launch-permission', json.dumps(permissions))
 
-    def __describe_instance(self, specific_id=None):
-        if specific_id:
+    def __describe_instance(self, instance_id=None):
+        if instance_id:
             instance = self.__awscli.ec2('describe-instances',
                                          '--instance-ids',
-                                         specific_id)
+                                         instance_id)
         else:
             self.wait_until_running()
             instance = self.__awscli.ec2('describe-instances',
