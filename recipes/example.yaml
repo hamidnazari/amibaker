@@ -45,10 +45,12 @@ tasks:
     - src: /path/to/another_file
       dest: /path/to/destination_file
       mode: 0600
+      sudo: True
   - run:
     - src: /path/to/local/script
       dest: /path/to/remote/dir
       cwd: /path/to/another/remote/dir
+      sudo: True
   - run:
     - cwd: /path/to//remote/dir
       body: |

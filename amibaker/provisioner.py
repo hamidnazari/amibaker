@@ -1,5 +1,5 @@
 from fabric.api import env, settings, hide
-from fabric.operations import run, put, sudo
+import fabric.operations
 from os import path
 
 
@@ -53,8 +53,8 @@ class Provisioner(object):
                     func_name = '_{0}'.format(operation)
                     getattr(self, func_name)(**job.__dict__)
 
-    def _run(self, src=None, body=None, dest=None, cwd=None, args=None):
-        assert (src or body),\
+    def _run(self, src=None, body=None, dest=None, cwd=None, args=None, sudo=False):
+        assert (src or body), \
             "You did not specify a src (file to copy & execute) or body (inline script), I got src={src}, body={body}".format(src=src, body=body)
 
         assert not (src and body), "Must specify only one of src or body, I got src={src}, body={body}".format(src=src, body=body)
@@ -69,7 +69,7 @@ class Provisioner(object):
             assert isinstance(args, str), "Arguments must be a string, not {0}".format(type(args))
 
         if src and not dest:
-            dest = run('mktemp')
+            dest = fabric.operations.run('mktemp')
 
         if src:
             self._copy(src=src, dest=dest, mode=0500)
@@ -88,23 +88,26 @@ class Provisioner(object):
         saved_exception = None
 
         try:
-            run(run_cmd)
+            if sudo:
+                fabric.operations.sudo(run_cmd)
+            else:
+                fabric.operations.run(run_cmd)
         except Exception, e:
             saved_exception = e
         finally:
             if dest:
-                sudo('rm {0}'.format(dest), warn_only=True)
+                fabric.operations.sudo('rm {0}'.format(dest), warn_only=True)
 
         if saved_exception:
             raise saved_exception
 
-    def _copy(self, src, dest, mode=0600):
-        opts = {'use_sudo': True}
+    def _copy(self, src, dest, sudo=False, mode=0600):
+        opts = {'use_sudo': sudo}
 
         dest_dir = path.dirname(dest)
-        sudo("mkdir -p %s" % dest_dir)
+        fabric.operations.sudo("mkdir -p %s" % dest_dir)
 
         if mode:
             opts['mode'] = mode
 
-        put(src, dest, **opts)
+        fabric.operations.put(src, dest, **opts)
