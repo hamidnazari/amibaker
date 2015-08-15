@@ -22,30 +22,23 @@ base_ami: ami-deadbeef
     assert a.base_ami == 'ami-deadbeef'
 
 
-def test_default_imaging_behaviour():
-    fake_recipe = StringIO.StringIO(b'''
+@pytest.mark.parametrize("value,expected", [
+    (b'''
 base_ami: ami-deadbeef
-''')
-    recipe = Recipe(fake_recipe)
-    assert recipe.imaging_behaviour == 'restart'
-
-
-def test_unacceptable_imaging_behaviour():
-    fake_recipe = StringIO.StringIO(b'''
+''', 'reboot'),
+    (b'''
 base_ami: ami-deadbeef
 imaging_behaviour: fly
-''')
-    recipe = Recipe(fake_recipe)
-    assert recipe.imaging_behaviour == 'restart'
-
-
-def test_behavior_should_be_behaviour():
-    fake_recipe = StringIO.StringIO(b'''
+''', 'reboot'),
+    (b'''
 base_ami: ami-deadbeef
 imaging_behavior: stop
-''')
+''', 'stop')
+])
+def test_default_imaging_behaviour(value, expected):
+    fake_recipe = StringIO.StringIO(value)
     recipe = Recipe(fake_recipe)
-    assert recipe.imaging_behaviour == 'stop'
+    assert recipe.imaging_behaviour == expected
 
 
 def test_behavior_vs_behaviour():

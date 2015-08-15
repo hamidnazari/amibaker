@@ -52,5 +52,5 @@ class Recipe(OpenStruct):
            'imaging_behaviour' not in self.__dict__:
             self.imaging_behaviour = self.imaging_behavior
 
-        if self.imaging_behaviour not in ('restart', 'stop', 'none'):
-            self.imaging_behaviour = 'restart'
+        if self.imaging_behaviour not in ('stop', 'none'):
+            self.imaging_behaviour = 'reboot'
