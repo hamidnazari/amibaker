@@ -69,18 +69,23 @@ tasks:
     - src: /path/to/another_file
       dest: /path/to/destination_file
       mode: 0600
+      sudo: True
   - run:
     - src: /path/to/local/script
       dest: /path/to/remote/dir
       cwd: /path/to/another/remote/dir
-  - run:
-    - cwd: /path/to//remote/dir
+    - cwd: /path/to/remote/dir
       body: |
-       sudo yum update -y
-       sudo yum install -y telnet
+       yum update -y
+       yum install -y telnet
+      sudo: True
+  - copy:
+    - src: /path/to/some_other_file
+      dest: /path/to/some_other_dir/
   - run:
     - source: /path/to/another/local/script
       cwd: /path/to/another/remote/dir
+      sudo: True
 ```
 
 ## Roadmap
@@ -90,3 +95,6 @@ tasks:
 * Generate keys if not provided
 * Eliminate dependency to Fabric and use Paramiko instead
 * CLI argument to pass identity files
+
+## Contributers
+* [Chris Speck](https://github.com/cgspeck)
