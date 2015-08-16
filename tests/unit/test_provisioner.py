@@ -14,6 +14,7 @@ def mock_provisioner(monkeypatch):
 
     m_ec2 = Mock()
     m_provisioner = provisioner.Provisioner(m_ec2, quiet=True)
+
     return m_provisioner
 
 
@@ -27,24 +28,28 @@ def test_copy(mock_provisioner, times):
     source = []
     target = []
     mode = []
+    sudo = []
 
     for i in xrange(0, times):
         source.append("/path/to/source%d" % i)
         target.append("/path/to/target%d" % i)
         mode.append((i+1) * 222)  # 222, 444, 666
+        sudo.append(i % 2 == 0)
 
-        copy.append({'src': source[i],
-                     'dest': target[i],
-                     'mode': mode[i]})
+        copy.append({
+            'src': source[i],
+            'dest': target[i],
+            'mode': mode[i],
+            'sudo': sudo[i]
+        })
 
     for task in copy:
         mock_provisioner._copy(**task)
 
     assert fabric.operations.put.call_count == times
 
-    calls = [call(source[i], target[i], mode=mode[i], use_sudo=False)
+    calls = [call(source[i], target[i], mode=mode[i], use_sudo=sudo[i])
              for i in reversed(xrange(0, times))]
-    # print(calls)
 
     assert sorted(fabric.operations.put.mock_calls) == sorted(calls)
 
@@ -64,6 +69,18 @@ def test_run_validates_input(mock_provisioner, src, body, args):
 
 def test_run_inline_script(mock_provisioner):
     mock_provisioner._run(body='whoami')
+    expected_calls = [call('whoami')]
+    assert fabric.operations.run.mock_calls == expected_calls
+
+
+def test_run_inline_sudo_script(mock_provisioner):
+    mock_provisioner._run(body='whoami', sudo=True)
+    expected_calls = [call('whoami')]
+    assert fabric.operations.sudo.mock_calls == expected_calls
+
+
+def test_run_inline_no_sudo_script(mock_provisioner):
+    mock_provisioner._run(body='whoami', sudo=False)
     expected_calls = [call('whoami')]
     assert fabric.operations.run.mock_calls == expected_calls
 
@@ -172,7 +189,27 @@ def test_run_src_nodest(monkeypatch, mock_provisioner):
 
 def test_process_tasks_single_inline(mock_provisioner):
     job1 = OpenStruct(body='whoami')
-    task1 = OpenStruct(run=[job1.__dict__])
+    task1 = OpenStruct(run=[job1])
+    list_of_tasks = [task1]
+
+    mock_provisioner.process_tasks(list_of_tasks)
+    expected_calls = [call('whoami')]
+    assert fabric.operations.run.mock_calls == expected_calls
+
+
+def test_process_tasks_single_sudo_inline(mock_provisioner):
+    job1 = OpenStruct(body='whoami', sudo=True)
+    task1 = OpenStruct(run=[job1])
+    list_of_tasks = [task1]
+
+    mock_provisioner.process_tasks(list_of_tasks)
+    expected_calls = [call('whoami')]
+    assert fabric.operations.sudo.mock_calls == expected_calls
+
+
+def test_process_tasks_single_no_sudo_inline(mock_provisioner):
+    job1 = OpenStruct(body='whoami', sudo=False)
+    task1 = OpenStruct(run=[job1])
     list_of_tasks = [task1]
 
     mock_provisioner.process_tasks(list_of_tasks)
