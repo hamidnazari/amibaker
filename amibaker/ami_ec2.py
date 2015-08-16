@@ -138,7 +138,7 @@ class AmiEc2(object):
             self.stop()
             self.wait_until_stopped()
             reboot = ''
-        elif self.__recipe.imaging_behaviour == 'restart':
+        elif self.__recipe.imaging_behaviour == 'reboot':
             reboot = '--reboot'
 
         self.__image = self.__awscli.ec2(

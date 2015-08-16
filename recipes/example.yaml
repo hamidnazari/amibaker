@@ -36,7 +36,7 @@ ami_permissions:
   - 345678901234
   - 567890123456
 
-imaging_behaviour: restart # restart by default, also accepts 'none' and 'stop'
+imaging_behaviour: reboot # reboot/restart by default, also accepts 'none' and 'stop'
 
 tasks:
   - copy:
@@ -45,15 +45,20 @@ tasks:
     - src: /path/to/another_file
       dest: /path/to/destination_file
       mode: 0600
+      sudo: True
   - run:
     - src: /path/to/local/script
       dest: /path/to/remote/dir
       cwd: /path/to/another/remote/dir
-  - run:
-    - cwd: /path/to//remote/dir
+    - cwd: /path/to/remote/dir
       body: |
-       sudo yum update -y
-       sudo yum install -y telnet
+       yum update -y
+       yum install -y telnet
+      sudo: True
+  - copy:
+    - src: /path/to/some_other_file
+      dest: /path/to/some_other_dir/
   - run:
     - source: /path/to/another/local/script
       cwd: /path/to/another/remote/dir
+      sudo: True
