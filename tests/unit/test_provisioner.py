@@ -48,10 +48,22 @@ def test_copy(mock_provisioner, times):
 
     assert fabric.operations.put.call_count == times
 
-    calls = [call(source[i], target[i], mode=mode[i], use_sudo=sudo[i])
-             for i in reversed(xrange(0, times))]
+    expected_run_calls = []
+    expected_put_calls = []
+    expected_sudo_calls = []
 
-    assert sorted(fabric.operations.put.mock_calls) == sorted(calls)
+    for i in xrange(0, times):
+        expected_put_calls.append(call(source[i], target[i], mode=mode[i], use_sudo=sudo[i]))
+        mkdir_call = call('mkdir -p {0}'.format('/path/to'))
+
+        if i % 2 == 0:
+            expected_sudo_calls.append(mkdir_call)
+        else:
+            expected_run_calls.append(mkdir_call)
+
+    assert fabric.operations.put.mock_calls == expected_put_calls
+    assert fabric.operations.run.mock_calls == expected_run_calls
+    assert fabric.operations.sudo.mock_calls == expected_sudo_calls
 
 
 @pytest.mark.parametrize("src,body,args", [
@@ -105,13 +117,13 @@ def test_run_src_dest(monkeypatch, mock_provisioner):
     )
 
     expected_run_calls = [
+        call('mkdir -p {0}'.format('/some/remote')),
         call('{0} {1}'.format(dest, args)),
     ]
     expected_put_calls = [
         call(src, dest, mode=0500, use_sudo=False)
     ]
     expected_sudo_calls = [
-        call('mkdir -p {0}'.format('/some/remote')),
         call('rm {0}'.format(dest), warn_only=True),
     ]
     assert fabric.operations.put.mock_calls == expected_put_calls
@@ -135,13 +147,13 @@ def test_run_src_dest_cwd(monkeypatch, mock_provisioner):
     )
 
     expected_run_calls = [
+        call('mkdir -p {0}'.format('/some/remote')),
         call('cd {0}; {1} {2}'.format(cwd, dest, args)),
     ]
     expected_put_calls = [
         call(src, dest, mode=0500, use_sudo=False)
     ]
     expected_sudo_calls = [
-        call('mkdir -p {0}'.format('/some/remote')),
         call('rm {0}'.format(dest), warn_only=True),
     ]
     assert fabric.operations.put.mock_calls == expected_put_calls
@@ -173,13 +185,13 @@ def test_run_src_nodest(monkeypatch, mock_provisioner):
 
     expected_run_calls = [
         call('mktemp'),
+        call('mkdir -p {0}'.format('/tmp')),
         call('{0} {1}'.format('/tmp/whatever', args)),
     ]
     expected_put_calls = [
-        call(src, '/tmp/whatever', mode=0500, use_sudo=False)
+        call(src, '/tmp/whatever', mode=0500, use_sudo=False),
     ]
     expected_sudo_calls = [
-        call('mkdir -p {0}'.format('/tmp')),
         call('rm {0}'.format('/tmp/whatever'), warn_only=True),
     ]
     assert fabric.operations.put.mock_calls == expected_put_calls
@@ -232,14 +244,13 @@ def test_process_tasks_src_dest_cwd(monkeypatch, mock_provisioner):
     mock_provisioner.process_tasks(list_of_tasks)
 
     expected_run_calls = [
+        call('mkdir -p {0}'.format('/some/remote')),
         call('cd {0}; {1} {2}'.format(cwd, dest, args)),
     ]
     expected_put_calls = [
         call(src, dest, mode=0500, use_sudo=False)
     ]
-
     expected_sudo_calls = [
-        call('mkdir -p {0}'.format('/some/remote')),
         call('rm {0}'.format(dest), warn_only=True),
     ]
     assert fabric.operations.put.mock_calls == expected_put_calls
@@ -271,14 +282,13 @@ def test_process_tasks_src_only(monkeypatch, mock_provisioner):
 
     expected_run_calls = [
         call('mktemp'),
-        call('{0}'.format('/tmp/whatever'))
+        call('mkdir -p {0}'.format('/tmp')),
+        call('{0}'.format('/tmp/whatever')),
     ]
     expected_put_calls = [
-        call(src, '/tmp/whatever', mode=0500, use_sudo=False)
+        call(src, '/tmp/whatever', mode=0500, use_sudo=False),
     ]
-
     expected_sudo_calls = [
-        call('mkdir -p {0}'.format('/tmp')),
         call('rm {0}'.format('/tmp/whatever'), warn_only=True),
     ]
 
