@@ -1,7 +1,4 @@
 flake8==2.4.1
 tox==2.1.1
-mock==1.0.1
-pytest==2.7.2
-pytest-cov==2.0.0
 ipdb==0.8.1
--r requirements.txt
+-r requirements-test.txt
