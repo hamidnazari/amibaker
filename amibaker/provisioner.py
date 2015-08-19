@@ -47,26 +47,35 @@ class Provisioner(object):
         for task in tasks:
             for operation, jobs in task.iteritems():
                 assert operation in self.PERMITTED_OPERATIONS
-                assert isinstance(jobs, list)  # TODO: support listifying attributes found at same level as operation
+                # TODO: support listifying attributes found at same level as
+                # operation
+                assert isinstance(jobs, list)
 
                 for job in jobs:
                     func_name = '_{0}'.format(operation)
                     getattr(self, func_name)(**job.__dict__)
 
-    def _run(self, src=None, body=None, dest=None, cwd=None, args=None, sudo=False):
+    def _run(self, src=None, body=None, dest=None, cwd=None, args=None,
+             sudo=False):
         assert (src or body), \
-            "You did not specify a src (file to copy & execute) or body (inline script), I got src={src}, body={body}".format(src=src, body=body)
+            "You did not specify a src (file to copy & execute) or body \
+                (inline script), I got src={src}, \
+                body={body}".format(src=src, body=body)
 
-        assert not (src and body), "Must specify only one of src or body, I got src={src}, body={body}".format(src=src, body=body)
+        assert not (src and body), "Must specify only one of src or body, I got \
+            src={src}, body={body}".format(src=src, body=body)
 
         if src:
-            assert path.isfile(src), "Cannot find source script '{0}'".format(src)
+            assert path.isfile(src), \
+                "Cannot find source script '{0}'".format(src)
 
         if body:
-            assert not args, "Cannot use arguments with embeded script, remove body and use src parameter instead."
+            assert not args, "Cannot use arguments with embeded script, remove \
+                body and use src parameter instead."
 
         if args:
-            assert isinstance(args, str), "Arguments must be a string, not {0}".format(type(args))
+            assert isinstance(args, str), \
+                "Arguments must be a string, not {0}".format(type(args))
 
         if src and not dest:
             dest = fabric.operations.run('mktemp')

@@ -53,7 +53,8 @@ def test_copy(mock_provisioner, times):
     expected_sudo_calls = []
 
     for i in xrange(0, times):
-        expected_put_calls.append(call(source[i], target[i], mode=mode[i], use_sudo=sudo[i]))
+        expected_put_calls.append(
+            call(source[i], target[i], mode=mode[i], use_sudo=sudo[i]))
         mkdir_call = call('mkdir -p {0}'.format('/path/to'))
 
         if i % 2 == 0:
@@ -163,7 +164,8 @@ def test_run_src_dest_cwd(monkeypatch, mock_provisioner):
 
 def test_run_src_nodest(monkeypatch, mock_provisioner):
     """
-    In this scenario _run has to call mktemp on remote system to come up with a suitable temporary file to use
+    In this scenario _run has to call mktemp on remote system to come up with a
+    suitable temporary file to use
     """
     src = '/some/local/file'
     args = 'foo --bar=True --baz'
@@ -260,7 +262,8 @@ def test_process_tasks_src_dest_cwd(monkeypatch, mock_provisioner):
 
 def test_process_tasks_src_only(monkeypatch, mock_provisioner):
     """
-    In this scenario _run has to call mktemp on remote system to come up with a suitable temporary file to use
+    In this scenario _run has to call mktemp on remote system to come up with a
+    suitable temporary file to use
     """
     src = '/some/local/file'
 
