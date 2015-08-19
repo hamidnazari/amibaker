@@ -90,7 +90,6 @@ tasks:
 
 ## Roadmap
 * Add more and more tests
-* Replace AWSCLI with Boto3
 * Improve documentation
 * Generate keys if not provided
 * Eliminate dependency to Fabric and use Paramiko instead
