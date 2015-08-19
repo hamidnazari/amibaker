@@ -105,7 +105,12 @@ class Provisioner(object):
         opts = {'use_sudo': sudo}
 
         dest_dir = path.dirname(dest)
-        fabric.operations.sudo("mkdir -p %s" % dest_dir)
+        mkdir = "mkdir -p %s" % dest_dir
+
+        if sudo:
+            fabric.operations.sudo(mkdir)
+        else:
+            fabric.operations.run(mkdir)
 
         if mode:
             opts['mode'] = mode
