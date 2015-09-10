@@ -83,7 +83,7 @@ tasks:
     - src: /path/to/some_other_file
       dest: /path/to/some_other_dir/
   - run:
-    - source: /path/to/another/local/script
+    - src: /path/to/another/local/script
       cwd: /path/to/another/remote/dir
       sudo: True
 ```
