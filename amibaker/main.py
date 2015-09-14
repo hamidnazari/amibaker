@@ -9,6 +9,7 @@ def run_recipes(args, recipes):
     for recipe in recipes:
         baker = AmiBaker(recipe,
                          quiet=args.quiet,
+                         dry_run=args.dry_run,
                          keep_instance=args.keep_instance,
                          override_base_ami=args.base_ami,
                          instance_id=args.instance_id
@@ -53,5 +54,15 @@ def main():
         help='For testing recipes, id of an already running ec2 machine'
     )
 
+    argparser.add_argument(
+        '-d', '--dry-run',
+        action='store_true',
+        help='For testing recipes, execute a dry-run'
+    )
+
     args = argparser.parse_args()
     run_recipes(args, args.recipe)
+
+# SJR python noob
+if __name__ == '__main__':
+    main()
