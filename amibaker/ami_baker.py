@@ -6,7 +6,6 @@ from .recipe import Recipe
 class AmiBaker(object):
     def __init__(self, recipe, **kwargs):
         self.__quiet = kwargs.get('quiet', False)
-        self.__dry_run = kwargs.get('dry_run', False)
         self.__keep_instance = kwargs.get('keep_instance', False)
         self._instance_id = kwargs.get('instance_id', None)
 
@@ -16,7 +15,7 @@ class AmiBaker(object):
         self.__recipe = Recipe(recipe, **override)
 
     def bake(self):
-        ec2 = AmiEc2(quiet=self.__quiet, dry_run=self.__dry_run, recipe=self.__recipe)
+        ec2 = AmiEc2(quiet=self.__quiet, recipe=self.__recipe)
 
         if self._instance_id:
             ec2.get_instance(self._instance_id)

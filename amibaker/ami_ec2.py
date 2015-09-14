@@ -5,7 +5,6 @@ import boto3
 class AmiEc2(object):
     def __init__(self, **kwrags):
         self.__quiet = kwrags.get('quiet', False)
-        self.__dry_run = kwrags.get('dry_run', False)
         self.__recipe = kwrags['recipe']
         self.__ec2 = boto3.client('ec2')
 
@@ -53,7 +52,6 @@ class AmiEc2(object):
         #     else '--no-associate-public-ip-address'
 
         instance = self.__ec2.run_instances(
-            DryRun = self.__dry_run,
             ImageId = self.__recipe.base_ami,
             KeyName = key_name,
             # SecurityGroupIds = security_group,
@@ -83,7 +81,6 @@ class AmiEc2(object):
 
     def terminate(self):
         self.__ec2.terminate_instances(
-            DryRun=self.__dry_run,
             InstanceIds=[self.__instance['InstanceId']]
 
         )
@@ -100,10 +97,7 @@ class AmiEc2(object):
 
     def wait(self, waiter_name):
         waiter = self.__ec2.get_waiter(waiter_name)
-        waiter.wait(
-            DryRun=self.__dry_run,
-            InstanceIds = [self.__instance['InstanceId']]
-        )
+        waiter.wait(InstanceIds = [self.__instance['InstanceId']])
 
     def wait_until_running(self):
         self.wait('instance_running')
@@ -120,13 +114,11 @@ class AmiEc2(object):
     def wait_until_image_available(self):
         waiter = self.__ec2.get_waiter('image_available')
         waiter.wait(
-            DryRun=self.__dry_run,
             ImageIds = [self.__image['ImageId']]
         )
 
     def stop(self):
         self.__ec2.stop_instances(
-            DryRun=self.__dry_run,
             InstanceIds=[self.__instance['InstanceId']]
         )
 
@@ -147,7 +139,6 @@ class AmiEc2(object):
                 tags.iteritems()]
 
         self.__ec2.create_tags(
-            DryRun=self.__dry_run,
             Resources=[resource],
             Tags=tags
         )
@@ -163,7 +154,6 @@ class AmiEc2(object):
 
         instance = self.__ec2.Instance(self.__instance['InstanceId'])
         self.__image = instance.create_image(
-            DryRun=self.__dry_run,
             Name=self.__recipe.ami_tags.Name,
             NoReboot=no_reboot)
 
@@ -188,7 +178,6 @@ class AmiEc2(object):
 
         self.wait_until_image_available()
         self.__ec2.modify_image_attribute(
-            DryRun=self.__dry_run,
             ImageId=self.__image['ImageId'],
             LaunchPermission=permissions
         )
@@ -196,19 +185,16 @@ class AmiEc2(object):
     def __describe_instance(self, instance_id=None):
         if instance_id:
             instance = self.__ec2.describe_instances(
-                DryRun=self.__dry_run,
                 InstanceIds=[instance_id])
         else:
             self.wait_until_running()
             instance = self.__ec2.describe_instances(
-                DryRun=self.__dry_run,
                 InstanceIds=[self.__instance['InstanceId']])
 
         self.__instance = instance['Reservations'][0]['Instances'][0]
 
     def __get_vpc_id(self):
         subnet = self.__ec2.describe_subnets(
-            DryRun=self.__dry_run,
             SubnetIds=[self.__recipe.subnet_id])
 
         return subnet['Subnets'][0]['VpcId']
@@ -217,13 +203,11 @@ class AmiEc2(object):
         vpc_id = self.__get_vpc_id()
 
         security_group = self.__ec2.create_security_group(
-            DryRun=self.__dry_run,
             GroupName=self.__recipe.ec2_tags.Name,
             Description='Allows temporary SSH access to the box.',
             VpcId=vpc_id)
 
         self.__ec2.authorize_security_group_ingress(
-            DryRun=self.__dry_run,
             GroupId=security_group['GroupId'],
             IpProtocol='tcp',
             FromPort=22,
@@ -231,7 +215,6 @@ class AmiEc2(object):
             CidrIp='0.0.0.0/0')
 
         self.__ec2.authorize_security_group_egress(
-            DryRun=self.__dry_run,
             GroupId=security_group['GroupId'],
             IpProtocol='tcp',
             FromPort=0,
@@ -242,7 +225,6 @@ class AmiEc2(object):
 
     def __delete_security_group(self):
         self.__ec2.delete_security_group(
-            DryRun=self.__dry_run,
             GroupId=self.security_group)
 
     def __generate_key_pair(self):
