@@ -240,13 +240,12 @@ class AmiEc2(object):
     def __create_iam_instance_profile(self, iam_roles):
         iam = boto3.client('iam')
 
-        iam.delete_instance_profile(InstanceProfileName='AmiBakerX')  # SJR removeme
-
-        self.iam_instance_profile = iam.create_instance_profile(InstanceProfileName='AmiBakerX')
+        self.iam_instance_profile = iam.create_instance_profile(
+            InstanceProfileName='AmiBaker')
 
         for role in iam_roles:
             iam.add_role_to_instance_profile(
-                InstanceProfileName='AmiBakerX',
+                InstanceProfileName='AmiBaker',
                 RoleName=role)
 
         return (self.iam_instance_profile['InstanceProfileName'],
@@ -254,6 +253,6 @@ class AmiEc2(object):
 
     def __delete_iam_instance_profile(self):
         iam = boto3.client('iam')
-        iam.delete_instance_profile(InstanceProfileName='AmiBakerX')
+        iam.delete_instance_profile(InstanceProfileName='AmiBaker')
 
         self.iam_instance_profile = None
