@@ -52,12 +52,12 @@ class AmiEc2(object):
         #     else '--no-associate-public-ip-address'
 
         instance = self.__ec2.run_instances(
-            ImageId = self.__recipe.base_ami,
-            KeyName = key_name,
+            ImageId=self.__recipe.base_ami,
+            KeyName=key_name,
             # SecurityGroupIds = security_group,
-            InstanceType = self.__recipe.instance_type,
+            InstanceType=self.__recipe.instance_type,
             # SubnetId = self.__recipe.subnet_id,
-            NetworkInterfaces = [
+            NetworkInterfaces=[
                 {
                     'DeviceIndex': 0,
                     'SubnetId': self.__recipe.subnet_id,
@@ -65,9 +65,9 @@ class AmiEc2(object):
                     'AssociatePublicIpAddress': self.__recipe.associate_public_ip,
                 }
             ],
-            IamInstanceProfile = iam_instance_profile,
-            MinCount = 1,
-            MaxCount = 1
+            IamInstanceProfile=iam_instance_profile,
+            MinCount=1,
+            MaxCount=1
         )
 
         self.__instance = instance['Instances'][0]
@@ -97,7 +97,7 @@ class AmiEc2(object):
 
     def wait(self, waiter_name):
         waiter = self.__ec2.get_waiter(waiter_name)
-        waiter.wait(InstanceIds = [self.__instance['InstanceId']])
+        waiter.wait(InstanceIds=[self.__instance['InstanceId']])
 
     def wait_until_running(self):
         self.wait('instance_running')
@@ -114,7 +114,7 @@ class AmiEc2(object):
     def wait_until_image_available(self):
         waiter = self.__ec2.get_waiter('image_available')
         waiter.wait(
-            ImageIds = [self.__image['ImageId']]
+            ImageIds=[self.__image['ImageId']]
         )
 
     def stop(self):
@@ -143,14 +143,13 @@ class AmiEc2(object):
             Tags=tags
         )
 
-
     def create_image(self):
         if self.__recipe.imaging_behaviour == 'stop':
             self.stop()
             self.wait_until_stopped()
-            no_reboot=True
+            no_reboot = True
         elif self.__recipe.imaging_behaviour == 'reboot':
-            no_reboot=False
+            no_reboot = False
 
         self.__image = self.__ec2.create_image(
             InstanceId=self.__instance['InstanceId'],
@@ -238,18 +237,18 @@ class AmiEc2(object):
     def __create_iam_instance_profile(self, iam_roles):
         iam = boto3.client('iam')
 
-        iam.delete_instance_profile(InstanceProfileName = 'AmiBakerX') # SJR removeme
+        iam.delete_instance_profile(InstanceProfileName='AmiBakerX')  # SJR removeme
 
-        self.iam_instance_profile = iam.create_instance_profile(InstanceProfileName = 'AmiBakerX')
+        self.iam_instance_profile = iam.create_instance_profile(InstanceProfileName='AmiBakerX')
 
         for role in iam_roles:
-            iam.add_role_to_instance_profile(InstanceProfileName = 'AmiBakerX', RoleName = role)
+            iam.add_role_to_instance_profile(InstanceProfileName='AmiBakerX', RoleName=role)
 
         return (self.iam_instance_profile['InstanceProfileName'],
                 self.iam_instance_profile['Arn'])
 
     def __delete_iam_instance_profile(self):
         iam = boto3.client('iam')
-        iam.delete_instance_profile(InstanceProfileName = 'AmiBakerX')
+        iam.delete_instance_profile(InstanceProfileName='AmiBakerX')
 
         self.iam_instance_profile = None
