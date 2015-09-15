@@ -61,7 +61,7 @@ class AmiEc2(object):
                 {
                     'DeviceIndex': 0,
                     'SubnetId': self.__recipe.subnet_id,
-                    'Groups': security_group,
+                    'Groups': [security_group],
                     'AssociatePublicIpAddress': self.__recipe.associate_public_ip,
                 }
             ],
@@ -152,8 +152,8 @@ class AmiEc2(object):
         elif self.__recipe.imaging_behaviour == 'reboot':
             no_reboot=False
 
-        instance = self.__ec2.Instance(self.__instance['InstanceId'])
-        self.__image = instance.create_image(
+        self.__image = self.__ec2.create_image(
+            InstanceId=self.__instance['InstanceId'],
             Name=self.__recipe.ami_tags.Name,
             NoReboot=no_reboot)
 
@@ -216,10 +216,10 @@ class AmiEc2(object):
 
         self.__ec2.authorize_security_group_egress(
             GroupId=security_group['GroupId'],
-            IpProtocol='tcp',
-            FromPort=0,
-            ToPort=65535,
-            CidrIp='0.0.0.0/0')
+            IpPermissions=[
+                {'IpProtocol': 'tcp', 'FromPort': 0, 'ToPort': 65535, 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]}
+            ]
+        )
 
         self.security_group = security_group['GroupId']
 
