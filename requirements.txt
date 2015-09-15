@@ -3,3 +3,4 @@ Jinja2==2.7.3
 ostruct==1.0
 PyYAML==3.11
 boto3
+argparse
