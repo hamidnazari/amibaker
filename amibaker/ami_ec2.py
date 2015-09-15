@@ -1,4 +1,3 @@
-import json
 import boto3
 
 
@@ -44,7 +43,6 @@ class AmiEc2(object):
         #         '--iam-instance-profile',
         #         ','.join(iam_instance_profile)
         #     ]
-
 
         # associate_public_ip_address = \
         #     '--associate-public-ip-address' \
@@ -216,7 +214,12 @@ class AmiEc2(object):
         self.__ec2.authorize_security_group_egress(
             GroupId=security_group['GroupId'],
             IpPermissions=[
-                {'IpProtocol': 'tcp', 'FromPort': 0, 'ToPort': 65535, 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]}
+                {
+                    'IpProtocol': 'tcp',
+                    'FromPort': 0,
+                    'ToPort': 65535,
+                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+                }
             ]
         )
 
@@ -242,7 +245,9 @@ class AmiEc2(object):
         self.iam_instance_profile = iam.create_instance_profile(InstanceProfileName='AmiBakerX')
 
         for role in iam_roles:
-            iam.add_role_to_instance_profile(InstanceProfileName='AmiBakerX', RoleName=role)
+            iam.add_role_to_instance_profile(
+                InstanceProfileName='AmiBakerX',
+                RoleName=role)
 
         return (self.iam_instance_profile['InstanceProfileName'],
                 self.iam_instance_profile['Arn'])
