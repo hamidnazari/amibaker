@@ -14,9 +14,9 @@ ami_tags:
   Name: DEADBEEF
 ''')
     recipe = Recipe(fake_recipe)
-    ec2 = AmiEc2(recipe=recipe)
-    print recipe
-    ec2._AmiEc2__instance = {'InstanceId': 'i-a1b2c3d4'}
+    # ec2 = AmiEc2(recipe=recipe)
+    # print recipe
+    # ec2._AmiEc2__instance = {'InstanceId': 'i-a1b2c3d4'}
 
     # ec2.create_image()
     # assert stop.call_count == 0
@@ -38,8 +38,8 @@ base_ami: ami-deadbeef
 imaging_behaviour: stop
 ''')
     recipe = Recipe(fake_recipe)
-    ec2 = AmiEc2(recipe=recipe)
-    ec2._AmiEc2__instance = {'InstanceId': 'i-a1b2c3d4'}
+    # ec2 = AmiEc2(recipe=recipe)
+    # ec2._AmiEc2__instance = {'InstanceId': 'i-a1b2c3d4'}
 
     # ec2.create_image()
     # assert stop.call_count == 1
