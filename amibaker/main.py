@@ -55,7 +55,3 @@ def main():
 
     args = argparser.parse_args()
     run_recipes(args, args.recipe)
-
-# SJR python noob
-if __name__ == '__main__':
-    main()
