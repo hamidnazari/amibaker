@@ -1,11 +1,23 @@
 import boto3
+import boto3.session
+import logging
 
 
 class AmiEc2(object):
     def __init__(self, **kwrags):
         self.__quiet = kwrags.get('quiet', False)
         self.__recipe = kwrags['recipe']
-        self.__ec2 = boto3.client('ec2')
+
+        logging.basicConfig(level=logging.DEBUG)  # send boto debug to stderr
+
+        # take aws_access_key_id, aws_secret_access_key, region_name, profile_name
+        self.__session = boto3.session.Session(
+            profile_name=self.__recipe.awscli_args.profile or None,
+            region_name=self.__recipe.awscli_args.default_region or None,
+            aws_access_key_id=self.__recipe.awscli_args.aws_access_key_id or None,
+            aws_secret_access_key=self.__recipe.awscli_args.aws_secret_access_key or None,
+        )
+        self.__ec2 = self.__session.client('ec2')
 
     def instantiate(self):
         security_group = self.__recipe.security_groups
@@ -238,8 +250,7 @@ class AmiEc2(object):
         pass
 
     def __create_iam_instance_profile(self, iam_roles):
-        iam = boto3.client('iam')
-
+        iam = self.__session.client('iam')
         self.iam_instance_profile = iam.create_instance_profile(
             InstanceProfileName='AmiBaker')
 
@@ -252,7 +263,7 @@ class AmiEc2(object):
                 self.iam_instance_profile['Arn'])
 
     def __delete_iam_instance_profile(self):
-        iam = boto3.client('iam')
+        iam = self.__session.client('iam')
         iam.delete_instance_profile(InstanceProfileName='AmiBaker')
 
         self.iam_instance_profile = None
