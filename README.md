@@ -83,14 +83,13 @@ tasks:
     - src: /path/to/some_other_file
       dest: /path/to/some_other_dir/
   - run:
-    - source: /path/to/another/local/script
+    - src: /path/to/another/local/script
       cwd: /path/to/another/remote/dir
       sudo: True
 ```
 
 ## Roadmap
 * Add more and more tests
-* Replace AWSCLI with Boto3
 * Improve documentation
 * Generate keys if not provided
 * Eliminate dependency to Fabric and use Paramiko instead

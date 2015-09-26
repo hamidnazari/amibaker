@@ -1,13 +1,23 @@
-import json
-from awsclpy import AWSCLPy
+import boto3
+import boto3.session
+import logging
 
 
 class AmiEc2(object):
     def __init__(self, **kwrags):
         self.__quiet = kwrags.get('quiet', False)
         self.__recipe = kwrags['recipe']
-        self.__awscli = AWSCLPy(quiet=self.__quiet,
-                                **self.__recipe.awscli_args.__dict__)
+
+        logging.basicConfig(level=logging.DEBUG)  # send boto debug to stderr
+
+        # take aws_access_key_id, aws_secret_access_key, region_name, profile_name
+        self.__session = boto3.session.Session(
+            profile_name=self.__recipe.awscli_args.profile or None,
+            region_name=self.__recipe.awscli_args.default_region or None,
+            aws_access_key_id=self.__recipe.awscli_args.aws_access_key_id or None,
+            aws_secret_access_key=self.__recipe.awscli_args.aws_secret_access_key or None,
+        )
+        self.__ec2 = self.__session.client('ec2')
 
     def instantiate(self):
         security_group = self.__recipe.security_groups
@@ -32,39 +42,43 @@ class AmiEc2(object):
         else:
             instance_profile_arn = instance_profile_name = None
 
-        iam_instance_profile = []
+        iam_instance_profile = {}
 
         if instance_profile_arn:
-            iam_instance_profile.append(
-                '='.join(['Arn', instance_profile_arn])
-            )
+            iam_instance_profile['Arn'] = instance_profile_arn
 
         if instance_profile_name:
-            iam_instance_profile.append(
-                '='.join(['Name', instance_profile_name])
-            )
+            iam_instance_profile['Name'] = instance_profile_name
 
-        if iam_instance_profile:
-            iam_instance_profile = [
-                '--iam-instance-profile',
-                ','.join(iam_instance_profile)
-            ]
+        # if iam_instance_profile:
+        #     iam_instance_profile = [
+        #         '--iam-instance-profile',
+        #         ','.join(iam_instance_profile)
+        #     ]
 
-        associate_public_ip_address = \
-            '--associate-public-ip-address' \
-            if self.__recipe.associate_public_ip \
-            else '--no-associate-public-ip-address'
+        # associate_public_ip_address = \
+        #     '--associate-public-ip-address' \
+        #     if self.__recipe.associate_public_ip \
+        #     else '--no-associate-public-ip-address'
 
-        instance = self.__awscli.ec2(
-            'run-instances',
-            '--image-id', self.__recipe.base_ami,
-            '--key-name', key_name,
-            '--security-group-ids', security_group,
-            '--instance-type', self.__recipe.instance_type,
-            '--subnet-id', self.__recipe.subnet_id,
-            associate_public_ip_address,
-            iam_instance_profile
-            )
+        instance = self.__ec2.run_instances(
+            ImageId=self.__recipe.base_ami,
+            KeyName=key_name,
+            # SecurityGroupIds = security_group,
+            InstanceType=self.__recipe.instance_type,
+            # SubnetId = self.__recipe.subnet_id,
+            NetworkInterfaces=[
+                {
+                    'DeviceIndex': 0,
+                    'SubnetId': self.__recipe.subnet_id,
+                    'Groups': [security_group],
+                    'AssociatePublicIpAddress': self.__recipe.associate_public_ip,
+                }
+            ],
+            IamInstanceProfile=iam_instance_profile,
+            MinCount=1,
+            MaxCount=1
+        )
 
         self.__instance = instance['Instances'][0]
 
@@ -76,8 +90,10 @@ class AmiEc2(object):
         self.__describe_instance(ec2_id)
 
     def terminate(self):
-        self.__awscli.ec2('terminate-instances',
-                          '--instance-ids', self.__instance['InstanceId'])
+        self.__ec2.terminate_instances(
+            InstanceIds=[self.__instance['InstanceId']]
+
+        )
 
         if hasattr(self, 'security_group'):
             self.wait_until_terminated()
@@ -89,29 +105,32 @@ class AmiEc2(object):
         if hasattr(self, 'iam_instance_profile'):
             self.__delete_iam_instance_profile()
 
+    def wait(self, waiter_name):
+        waiter = self.__ec2.get_waiter(waiter_name)
+        waiter.wait(InstanceIds=[self.__instance['InstanceId']])
+
     def wait_until_running(self):
-        self.__awscli.ec2('wait', 'instance-running',
-                          '--instance-ids', self.__instance['InstanceId'])
+        self.wait('instance_running')
 
     def wait_until_healthy(self):
-        self.__awscli.ec2('wait', 'instance-status-ok',
-                          '--instance-ids', self.__instance['InstanceId'])
+        self.wait('instance_status_ok')
 
     def wait_until_stopped(self):
-        self.__awscli.ec2('wait', 'instance-stopped',
-                          '--instance-ids', self.__instance['InstanceId'])
+        self.wait('instance_stopped')
 
     def wait_until_terminated(self):
-        self.__awscli.ec2('wait', 'instance-terminated',
-                          '--instance-ids', self.__instance['InstanceId'])
+        self.wait('instance_terminated')
 
     def wait_until_image_available(self):
-        self.__awscli.ec2('wait', 'image-available',
-                          '--image-ids', self.__image['ImageId'])
+        waiter = self.__ec2.get_waiter('image_available')
+        waiter.wait(
+            ImageIds=[self.__image['ImageId']]
+        )
 
     def stop(self):
-        self.__awscli.ec2('stop-instances',
-                          '--instance-ids', self.__instance['InstanceId'])
+        self.__ec2.stop_instances(
+            InstanceIds=[self.__instance['InstanceId']]
+        )
 
     def get_hostname(self):
         if self.__instance.get('PublicDnsName'):
@@ -126,26 +145,26 @@ class AmiEc2(object):
         return self.__recipe.ssh_username
 
     def tag(self, resource, tags):
-        tags = ["Key=%s,Value=%s" % (key, value) for key, value in
+        tags = [{'Key': key, 'Value': value} for key, value in
                 tags.iteritems()]
 
-        self.__awscli.ec2('create-tags',
-                          '--resources', resource,
-                          '--tags', tags)
+        self.__ec2.create_tags(
+            Resources=[resource],
+            Tags=tags
+        )
 
     def create_image(self):
         if self.__recipe.imaging_behaviour == 'stop':
             self.stop()
             self.wait_until_stopped()
-            reboot = ''
+            no_reboot = True
         elif self.__recipe.imaging_behaviour == 'reboot':
-            reboot = '--reboot'
+            no_reboot = False
 
-        self.__image = self.__awscli.ec2(
-            'create-image',
-            '--instance-id', self.__instance['InstanceId'],
-            '--name', self.__recipe.ami_tags.Name,
-            reboot)
+        self.__image = self.__ec2.create_image(
+            InstanceId=self.__instance['InstanceId'],
+            Name=self.__recipe.ami_tags.Name,
+            NoReboot=no_reboot)
 
         ami_permissions = self.__recipe.ami_permissions
 
@@ -167,55 +186,60 @@ class AmiEc2(object):
             permissions['Add'].append({'UserId': str(account_id)})
 
         self.wait_until_image_available()
-        self.__awscli.ec2('modify-image-attribute',
-                          '--image-id', self.__image['ImageId'],
-                          '--launch-permission', json.dumps(permissions))
+        self.__ec2.modify_image_attribute(
+            ImageId=self.__image['ImageId'],
+            LaunchPermission=permissions
+        )
 
     def __describe_instance(self, instance_id=None):
         if instance_id:
-            instance = self.__awscli.ec2('describe-instances',
-                                         '--instance-ids',
-                                         instance_id)
+            instance = self.__ec2.describe_instances(
+                InstanceIds=[instance_id])
         else:
             self.wait_until_running()
-            instance = self.__awscli.ec2('describe-instances',
-                                         '--instance-ids',
-                                         self.__instance['InstanceId'])
+            instance = self.__ec2.describe_instances(
+                InstanceIds=[self.__instance['InstanceId']])
 
         self.__instance = instance['Reservations'][0]['Instances'][0]
 
     def __get_vpc_id(self):
-        subnet = self.__awscli.ec2('describe-subnets',
-                                   '--subnet-ids', self.__recipe.subnet_id)
+        subnet = self.__ec2.describe_subnets(
+            SubnetIds=[self.__recipe.subnet_id])
 
         return subnet['Subnets'][0]['VpcId']
 
     def __create_security_group(self):
         vpc_id = self.__get_vpc_id()
 
-        security_group = self.__awscli.ec2(
-            'create-security-group',
-            '--group-name', self.__recipe.ec2_tags.Name,
-            '--description', 'Allows temporary SSH access to the box.',
-            '--vpc-id', vpc_id)
+        security_group = self.__ec2.create_security_group(
+            GroupName=self.__recipe.ec2_tags.Name,
+            Description='Allows temporary SSH access to the box.',
+            VpcId=vpc_id)
 
-        self.__awscli.ec2('authorize-security-group-ingress',
-                          '--group-id', security_group['GroupId'],
-                          '--protocol', 'tcp',
-                          '--port', 22,
-                          '--cidr', '0.0.0.0/0')
+        self.__ec2.authorize_security_group_ingress(
+            GroupId=security_group['GroupId'],
+            IpProtocol='tcp',
+            FromPort=22,
+            ToPort=22,
+            CidrIp='0.0.0.0/0')
 
-        self.__awscli.ec2('authorize-security-group-egress',
-                          '--group-id', security_group['GroupId'],
-                          '--protocol', 'tcp',
-                          '--port', '0-65535',
-                          '--cidr', '0.0.0.0/0')
+        self.__ec2.authorize_security_group_egress(
+            GroupId=security_group['GroupId'],
+            IpPermissions=[
+                {
+                    'IpProtocol': 'tcp',
+                    'FromPort': 0,
+                    'ToPort': 65535,
+                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+                }
+            ]
+        )
 
         self.security_group = security_group['GroupId']
 
     def __delete_security_group(self):
-        self.__awscli.ec2('delete-security-group',
-                          '--group-id', self.security_group)
+        self.__ec2.delete_security_group(
+            GroupId=self.security_group)
 
     def __generate_key_pair(self):
         # TODO: generate keypair if not provided
@@ -226,22 +250,20 @@ class AmiEc2(object):
         pass
 
     def __create_iam_instance_profile(self, iam_roles):
-        iam_instance_profile = self.__awscli.iam(
-            'create-instance-profile',
-            '--instance-profile-name', 'AmiBaker')
-
-        self.iam_instance_profile = iam_instance_profile['InstanceProfile']
+        iam = self.__session.client('iam')
+        self.iam_instance_profile = iam.create_instance_profile(
+            InstanceProfileName='AmiBaker')
 
         for role in iam_roles:
-            self.__awscli.iam('add-role-to-instance-profile',
-                              '--instance-profile-name', 'AmiBaker',
-                              '--role-name', role)
+            iam.add_role_to_instance_profile(
+                InstanceProfileName='AmiBaker',
+                RoleName=role)
 
         return (self.iam_instance_profile['InstanceProfileName'],
                 self.iam_instance_profile['Arn'])
 
     def __delete_iam_instance_profile(self):
-        self.__awscli.iam('delete-instance-profile',
-                          '--instance-profile-name', 'AmiBaker')
+        iam = self.__session.client('iam')
+        iam.delete_instance_profile(InstanceProfileName='AmiBaker')
 
         self.iam_instance_profile = None
