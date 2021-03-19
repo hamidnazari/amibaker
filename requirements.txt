@@ -1,5 +1,5 @@
 awsclpy==0.3.5
 Fabric==1.10.2
-Jinja2==2.7.3
+Jinja2==2.11.3
 ostruct==1.0
 PyYAML==3.11
